@@ -89,12 +89,13 @@ export abstract class EzoicAdViewBase<L extends EzoicNativeAdListeners> {
   private detachElement: (() => void) | null = null;
   private attachedElement: HTMLElement | null = null;
   private autoHeight = true;
+  private readonly onEvent = (event: EzoicAdViewEvent) => this.handleEvent(event);
 
   protected constructor(kind: EzoicAdViewKind, adUnitIdentifier: string, placement: EzoicAdPlacement) {
     this.id = `ezoic-${kind}-${++nextViewId}`;
     this.adUnitIdentifier = adUnitIdentifier;
     this.placement = placement;
-    adViewEvents.subscribe(this.id, (event) => this.handleEvent(event));
+    adViewEvents.subscribe(this.id, this.onEvent);
   }
 
   /** The current overlay placement. */
@@ -177,9 +178,14 @@ export abstract class EzoicAdViewBase<L extends EzoicNativeAdListeners> {
     if (this.destroyed) return;
     this.destroyed = true;
     this.detach();
-    adViewEvents.unsubscribe(this.id);
-    this.listeners = {} as L;
+    this.release();
     await EzoicAdsNative.destroyAdView({ id: this.id });
+  }
+
+  /** Drops the event subscription and listeners (used when `create` fails and by `destroy`). */
+  protected release(): void {
+    adViewEvents.unsubscribe(this.id, this.onEvent);
+    this.listeners = {} as L;
   }
 
   protected handleEvent(event: EzoicAdViewEvent): void {
@@ -262,7 +268,7 @@ export class EzoicBannerAd extends EzoicAdViewBase<EzoicAdViewListeners> {
       });
       return ad;
     } catch (error) {
-      adViewEvents.unsubscribe(ad.id);
+      ad.release();
       throw error;
     }
   }
@@ -293,7 +299,7 @@ export class EzoicOutstreamAd extends EzoicAdViewBase<EzoicAdViewListeners> {
       });
       return ad;
     } catch (error) {
-      adViewEvents.unsubscribe(ad.id);
+      ad.release();
       throw error;
     }
   }
@@ -323,7 +329,7 @@ export class EzoicNativeAd extends EzoicAdViewBase<EzoicNativeAdListeners> {
       });
       return ad;
     } catch (error) {
-      adViewEvents.unsubscribe(ad.id);
+      ad.release();
       throw error;
     }
   }

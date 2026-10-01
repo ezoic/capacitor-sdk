@@ -28,12 +28,13 @@ export class EzoicRewardedAd {
 
   private listeners: EzoicRewardedAdListeners = {};
   private subscribed = false;
+  private readonly onEvent = (event: EzoicFullScreenAdEvent) => this.handleEvent(event);
   private spent = false;
   private destroyed = false;
 
   private constructor(adUnitIdentifier: string) {
     this.adUnitIdentifier = adUnitIdentifier;
-    rewardedAdEvents.subscribe(adUnitIdentifier, (event) => this.handleEvent(event));
+    rewardedAdEvents.subscribe(adUnitIdentifier, this.onEvent);
     this.subscribed = true;
   }
 
@@ -90,7 +91,7 @@ export class EzoicRewardedAd {
 
   private release(): void {
     if (this.subscribed) {
-      rewardedAdEvents.unsubscribe(this.adUnitIdentifier);
+      rewardedAdEvents.unsubscribe(this.adUnitIdentifier, this.onEvent);
       this.subscribed = false;
     }
     this.listeners = {};

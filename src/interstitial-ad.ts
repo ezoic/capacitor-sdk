@@ -24,12 +24,13 @@ export class EzoicInterstitialAd {
 
   private listeners: EzoicInterstitialAdListeners = {};
   private subscribed = false;
+  private readonly onEvent = (event: EzoicFullScreenAdEvent) => this.handleEvent(event);
   private spent = false;
   private destroyed = false;
 
   private constructor(adUnitIdentifier: string) {
     this.adUnitIdentifier = adUnitIdentifier;
-    interstitialAdEvents.subscribe(adUnitIdentifier, (event) => this.handleEvent(event));
+    interstitialAdEvents.subscribe(adUnitIdentifier, this.onEvent);
     this.subscribed = true;
   }
 
@@ -81,7 +82,7 @@ export class EzoicInterstitialAd {
 
   private release(): void {
     if (this.subscribed) {
-      interstitialAdEvents.unsubscribe(this.adUnitIdentifier);
+      interstitialAdEvents.unsubscribe(this.adUnitIdentifier, this.onEvent);
       this.subscribed = false;
     }
     this.listeners = {};

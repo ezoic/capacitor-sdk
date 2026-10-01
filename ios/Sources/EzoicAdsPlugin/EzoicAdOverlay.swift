@@ -74,8 +74,10 @@ enum EzoicPluginError: Error, LocalizedError {
   }
 }
 
-/// A full-size, touch-transparent layer above the WebView: taps that do not
-/// hit an ad fall through to the web content beneath.
+/// A touch-transparent container: taps that do not hit a subview fall through
+/// to whatever is beneath. Used for the overlay layer above the WebView and
+/// for each ad host, so a full-width host never swallows taps beside a
+/// narrower creative.
 final class EzoicOverlayView: UIView {
   override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
     let hit = super.hitTest(point, with: event)
@@ -87,11 +89,13 @@ final class EzoicOverlayView: UIView {
 /// on it. All methods must be called on the main thread.
 ///
 /// Each ad gets a *host* view positioned by its placement; the native ad view
-/// lives inside the host. For edge placements without an explicit size, a
-/// banner's host tracks the creative size reported by the SDK (0×0 until the
-/// first fill and again on collapse), so an unfilled banner occupies no space
-/// and intercepts no taps. For `inline` placements the JS side keeps the
-/// frame in sync with a DOM element.
+/// lives inside the host. An edge host spans the overlay width unless given
+/// an explicit width (the SDK fits oversized Prebid creatives to the banner
+/// view's own width, so the banner view must be as wide as the space it may
+/// use); a banner host's height tracks the creative height reported by the
+/// SDK (0 until the first fill and again on collapse), so an unfilled banner
+/// occupies no space and intercepts no taps. For `inline` placements the JS
+/// side keeps the frame in sync with a DOM element.
 final class EzoicAdViewManager {
   private final class Entry {
     let id: String
@@ -101,9 +105,8 @@ final class EzoicAdViewManager {
     let sizes: [String]
     let collapseOnNoFill: Bool
     var placement: EzoicPlacement
-    let host = UIView()
+    let host = EzoicOverlayView()
     var constraints: [NSLayoutConstraint] = []
-    var widthConstraint: NSLayoutConstraint?
     var heightConstraint: NSLayoutConstraint?
     var reportedSize: CGSize = .zero
     var loadStarted = false
@@ -249,7 +252,6 @@ final class EzoicAdViewManager {
   private func applyLayout(_ entry: Entry, in layer: UIView) {
     NSLayoutConstraint.deactivate(entry.constraints)
     entry.constraints = []
-    entry.widthConstraint = nil
     entry.heightConstraint = nil
     let host = entry.host
 
@@ -274,9 +276,6 @@ final class EzoicAdViewManager {
       let width: NSLayoutConstraint
       if let explicitWidth = explicitWidth {
         width = host.widthAnchor.constraint(equalToConstant: explicitWidth)
-      } else if entry.kind == .banner {
-        width = host.widthAnchor.constraint(equalToConstant: entry.reportedSize.width)
-        entry.widthConstraint = width
       } else {
         width = host.widthAnchor.constraint(equalTo: layer.widthAnchor)
       }
@@ -304,12 +303,11 @@ final class EzoicAdViewManager {
     return entry
   }
 
-  /// Applies an SDK-reported creative size to an edge-placed host that has
-  /// no explicit size (banner: width + height; outstream: height only).
+  /// Applies an SDK-reported creative height to an edge-placed host that has
+  /// no explicit height (banner and outstream).
   private func applyReportedSize(_ entry: Entry, _ size: CGSize) {
     entry.reportedSize = size
     entry.sizeReported = true
-    entry.widthConstraint?.constant = size.width
     entry.heightConstraint?.constant = size.height
     entry.host.superview?.layoutIfNeeded()
   }
@@ -324,10 +322,13 @@ final class EzoicAdViewManager {
     view.delegate = proxy
     view.translatesAutoresizingMaskIntoConstraints = false
     entry.host.addSubview(view)
-    // Centre the creative inside the host (which is either sized from
-    // `didChangeSize` or a fixed frame that may be larger than the creative).
+    // The banner view spans the host's width (the SDK uses that width as the
+    // "available width" when fitting Prebid creatives and centres the GAM view
+    // inside itself); its height is intrinsic, so a fixed-height inline host
+    // keeps it vertically centred.
     NSLayoutConstraint.activate([
-      view.centerXAnchor.constraint(equalTo: entry.host.centerXAnchor),
+      view.leadingAnchor.constraint(equalTo: entry.host.leadingAnchor),
+      view.trailingAnchor.constraint(equalTo: entry.host.trailingAnchor),
       view.centerYAnchor.constraint(equalTo: entry.host.centerYAnchor),
     ])
     entry.banner = view

@@ -78,9 +78,9 @@ internal enum class AdViewKind(val wire: String, val defaultHeightDp: Int?) {
  * added to the WebView's parent and padded to the WebView's own bounds, so
  * its coordinate space is the WebView's viewport. Each ad gets a *host*
  * `FrameLayout` child positioned by its [Placement]; the native ad view lives
- * inside the host. A host is `WRAP_CONTENT` for an edge banner (so an unfilled
- * banner takes no space and intercepts no taps), and the native banner view
- * collapses itself to `GONE` on a terminal no-fill. For `inline` placements
+ * inside the host. An edge host spans the overlay's width and wraps its
+ * height (so an unfilled banner takes no space and intercepts no taps), and
+ * the native banner view collapses itself to `GONE` on a terminal no-fill. For `inline` placements
  * the JS side keeps the frame in sync with a DOM element and shrinks it to
  * zero height when the banner collapses.
  */
@@ -239,9 +239,12 @@ internal class EzoicAdViewManager(
         topMargin = dp(p.yDp)
       }
       is Placement.Edge -> {
-        val isBanner = entry.kind == AdViewKind.BANNER
-        val width = p.widthDp?.let { dp(it) }
-          ?: if (isBanner) ViewGroup.LayoutParams.WRAP_CONTENT else ViewGroup.LayoutParams.MATCH_PARENT
+        // Always span the overlay unless an explicit width was given: the SDK
+        // fits oversized Prebid creatives to the banner view's own width, so a
+        // WRAP_CONTENT host would make it shrink every creative to nothing.
+        // A full-width host is not clickable and takes no height until a
+        // creative fills, so it never steals taps from the WebView.
+        val width = p.widthDp?.let { dp(it) } ?: ViewGroup.LayoutParams.MATCH_PARENT
         val height = (p.heightDp ?: entry.kind.defaultHeightDp)?.let { dp(it) } ?: ViewGroup.LayoutParams.WRAP_CONTENT
         val gravity = (if (p.top) Gravity.TOP else Gravity.BOTTOM) or Gravity.CENTER_HORIZONTAL
         FrameLayout.LayoutParams(width, height, gravity).apply {
@@ -277,11 +280,13 @@ internal class EzoicAdViewManager(
       }
     }
     entry.banner = banner
-    // Centre the creative inside the host (the host is either WRAP_CONTENT or
-    // a fixed frame that may be larger than the creative).
+    // The banner view spans the host's width (the SDK uses that width as the
+    // "available width" when fitting Prebid creatives and centres the GAM
+    // view inside itself); its height follows the creative, so a fixed-height
+    // inline host keeps it vertically centred.
     entry.host.addView(
       banner,
-      FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER),
+      FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER),
     )
     if (entry.sizes.isEmpty()) banner.loadAd() else banner.loadAd(entry.sizes)
   }

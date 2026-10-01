@@ -56,6 +56,21 @@ describe('EzoicRewardedAd', () => {
     expect(bListeners.onShown).not.toHaveBeenCalled();
   });
 
+  it('a rejected duplicate load does not drop the live instance for the same unit', async () => {
+    const live = await EzoicRewardedAd.load('105');
+    await flush();
+    const listeners = { onShown: vi.fn(), onDismissed: vi.fn() };
+    live.setListeners(listeners);
+
+    plugin.loadRewardedAd.mockRejectedValueOnce(new Error('An ad is already loaded/loading for ad unit 105'));
+    await expect(EzoicRewardedAd.load('105')).rejects.toThrow('already loaded');
+
+    plugin.emit('rewardedAdEvent', { adUnitIdentifier: '105', type: 'shown' });
+    plugin.emit('rewardedAdEvent', { adUnitIdentifier: '105', type: 'dismissed' });
+    expect(listeners.onShown).toHaveBeenCalledTimes(1);
+    expect(listeners.onDismissed).toHaveBeenCalledTimes(1);
+  });
+
   it('dismissal is terminal: no further events, destroy skips the native call', async () => {
     const ad = await EzoicRewardedAd.load('1');
     await flush();

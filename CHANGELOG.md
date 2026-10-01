@@ -4,9 +4,11 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
-## 1.13.0
+## 1.13.1
 
-Initial release, wrapping Ezoic Ads SDK 1.13.0 for iOS and Android.
+Initial release, wrapping Ezoic Ads SDK 1.13.1 for iOS and Android. (1.13.0
+was never published; the first npm release is 1.13.1 so the plugin and the
+native SDKs share a version.)
 
 - `EzoicAds` facade: `initialize`, `trackPageview`, `setSubjectToCOPPA`,
   `setGDPRConsent`, `setGPPConsent`, `presentConsentIfRequired`,

@@ -1,6 +1,6 @@
 {
   "name": "@ezoic/capacitor-sdk",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "description": "Ezoic Ads SDK for Capacitor (Prebid + Google Ad Manager banner, native, interstitial, rewarded, outstream and instream video ads).",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

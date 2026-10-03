@@ -4,6 +4,12 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.13.2
+
+Wraps Ezoic Ads SDK 1.13.2. Header-bidding requests now identify Google Mobile
+Ads and its runtime version as the display manager (OpenRTB
+`imp.displaymanager` / `imp.displaymanagerver`). No plugin API changes.
+
 ## 1.13.1
 
 Initial release, wrapping Ezoic Ads SDK 1.13.1 for iOS and Android. (1.13.0

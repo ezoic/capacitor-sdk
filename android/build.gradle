@@ -27,7 +27,7 @@ android {
         minSdkVersion project.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : 24
         targetSdkVersion project.hasProperty('targetSdkVersion') ? rootProject.ext.targetSdkVersion : 36
         versionCode 1
-        versionName "1.13.1"
+        versionName "1.13.2"
     }
     buildTypes {
         release {
@@ -63,7 +63,7 @@ dependencies {
     // Native Ezoic Ads SDK (resolved from Maven Central). Brings in Google Mobile
     // Ads + Prebid transitively. Requires mavenCentral() + google() in the
     // consuming app's repositories (the Capacitor template provides both).
-    implementation "com.ezoic.sdk:ezoic-ads-sdk:1.13.1"
+    implementation "com.ezoic.sdk:ezoic-ads-sdk:1.13.2"
 
     // The native-ad template references GMA's NativeAdView/MediaView/NativeAd
     // types at compile time. The Ezoic SDK POM scopes Google Mobile Ads at

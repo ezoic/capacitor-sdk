@@ -4,6 +4,16 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.15.0
+
+Wraps Ezoic Ads SDK 1.15.0. Google Mobile Ads moves to 25.2.0 on Android and
+13.x on iOS (Google Mobile Ads 22.x for Android is past Google's sunset date).
+iOS builds need Xcode 26.2 or later. The plugin's default Kotlin version moves
+to 2.1.21, the minimum for Google Mobile Ads 25.2.0; apps that set
+`kotlin_version` in their root `build.gradle` must use 2.1 or later.
+Header-bidding targeting is attached only when the bid clears the floor of each
+waterfall step. No plugin API changes.
+
 ## 1.13.2
 
 Wraps Ezoic Ads SDK 1.13.2. Header-bidding requests now identify Google Mobile

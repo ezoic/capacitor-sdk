@@ -12,7 +12,7 @@ and the `EzoicInstreamAd` controller. On the web every call is a safe no-op.
 ## Requirements
 
 - Capacitor 7 or 8.
-- iOS 15.0+ and Xcode 26+ (required by the native `EzoicAdsSDK` 1.13), Android `minSdk` 24+.
+- iOS 15.0+ and Xcode 26.2+ (required by the native `EzoicAdsSDK` 1.15), Android `minSdk` 24+ and Kotlin 2.1+.
 
 ## Installation
 

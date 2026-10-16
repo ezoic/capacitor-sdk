@@ -14,12 +14,12 @@ let package = Package(
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", "7.0.0" ..< "9.0.0"),
         // Native Ezoic Ads SDK (pre-built XCFramework + Prebid / GMA / APS
         // transitive packages). Kept in lockstep with the plugin version.
-        .package(url: "https://github.com/ezoic/ezoic-swift-sdk-dist.git", from: "1.13.2"),
+        .package(url: "https://github.com/ezoic/ezoic-swift-sdk-dist.git", from: "1.15.0"),
         // The native-ad template imports GoogleMobileAds directly
-        // (NativeAdView, MediaView, NativeAd). GMA 12 to match the SDK.
+        // (NativeAdView, MediaView, NativeAd). GMA 13 to match the SDK.
         .package(
             url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git",
-            "12.0.0" ..< "13.0.0"
+            "13.0.0" ..< "14.0.0"
         )
     ],
     targets: [

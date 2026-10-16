@@ -12,7 +12,7 @@ import type {
   EzoicOutstreamAdOptions,
 } from './definitions';
 import { adViewEvents } from './events';
-import { coerceAdUnitId, normalizePlacement, normalizeSize } from './helpers';
+import { coerceAdUnitId, normalizePlacement, normalizeRefreshOverride, normalizeSize } from './helpers';
 import { EzoicAdsNative } from './plugin';
 
 let nextViewId = 0;
@@ -247,6 +247,8 @@ function toError(event: EzoicAdViewEvent): EzoicAdError {
  * Mirrors the native `EzoicBannerView`: `collapseOnNoFill` (default `true`)
  * collapses the view to height 0 when a load fails and nothing is displayed;
  * `onSizeChange` reports the creative size, or 0x0 on collapse.
+ * `refreshIntervalSeconds` / `refreshMaxCount` override the server's refresh
+ * setting; leave them out to follow the server.
  */
 export class EzoicBannerAd extends EzoicAdViewBase<EzoicAdViewListeners> {
   private constructor(adUnitIdentifier: string, placement: EzoicAdPlacement) {
@@ -257,6 +259,8 @@ export class EzoicBannerAd extends EzoicAdViewBase<EzoicAdViewListeners> {
   static async create(options: EzoicBannerAdOptions): Promise<EzoicBannerAd> {
     const placement = normalizePlacement(options.placement);
     const ad = new EzoicBannerAd(coerceAdUnitId(options.adUnitIdentifier), placement);
+    const refreshIntervalSeconds = normalizeRefreshOverride(options.refreshIntervalSeconds);
+    const refreshMaxCount = normalizeRefreshOverride(options.refreshMaxCount);
     try {
       await EzoicAdsNative.createAdView({
         id: ad.id,
@@ -264,6 +268,9 @@ export class EzoicBannerAd extends EzoicAdViewBase<EzoicAdViewListeners> {
         adUnitIdentifier: ad.adUnitIdentifier,
         size: normalizeSize(options.size),
         collapseOnNoFill: options.collapseOnNoFill ?? true,
+        // Sent only when set, so the native banner keeps null (server decides).
+        ...(refreshIntervalSeconds !== undefined && { refreshIntervalSeconds }),
+        ...(refreshMaxCount !== undefined && { refreshMaxCount }),
         placement,
       });
       return ad;

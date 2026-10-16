@@ -33,6 +33,25 @@ describe('EzoicBannerAd.create', () => {
     });
   });
 
+  it('omits refresh overrides when unset so the server decides', async () => {
+    await EzoicBannerAd.create({ adUnitIdentifier: '1', refreshIntervalSeconds: null });
+    const options = plugin.createAdView.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect('refreshIntervalSeconds' in options).toBe(false);
+    expect('refreshMaxCount' in options).toBe(false);
+  });
+
+  it('passes refresh overrides, including 0, and drops invalid values', async () => {
+    await EzoicBannerAd.create({ adUnitIdentifier: '1', refreshIntervalSeconds: 0, refreshMaxCount: 10.7 });
+    expect(plugin.createAdView).toHaveBeenCalledWith(
+      expect.objectContaining({ refreshIntervalSeconds: 0, refreshMaxCount: 10 }),
+    );
+    plugin.reset();
+    await EzoicBannerAd.create({ adUnitIdentifier: '1', refreshIntervalSeconds: -1, refreshMaxCount: Number.NaN });
+    const options = plugin.createAdView.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect('refreshIntervalSeconds' in options).toBe(false);
+    expect('refreshMaxCount' in options).toBe(false);
+  });
+
   it('defaults to a bottom placement and an adaptive size', async () => {
     const banner = await EzoicBannerAd.create({ adUnitIdentifier: '1' });
     expect(plugin.createAdView).toHaveBeenCalledWith(

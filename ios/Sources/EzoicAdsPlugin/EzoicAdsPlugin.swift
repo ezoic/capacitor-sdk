@@ -285,14 +285,21 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
       call.rejectPlugin(error.localizedDescription)
       return
     }
-    let sizes = (call.getArray("size", String.self) ?? [])
+    // JS sends `size` as a comma-separated string; an array is accepted too.
+    let rawSizes = call.getString("size").map { $0.split(separator: ",").map(String.init) }
+      ?? call.getArray("size", String.self) ?? []
+    let sizes = rawSizes
       .map { $0.trimmingCharacters(in: .whitespaces) }
       .filter { !$0.isEmpty }
     let collapseOnNoFill = call.getBool("collapseOnNoFill") ?? true
+    // Absent = nil: the native banner then follows the server.
+    let refreshIntervalSeconds = call.getInt("refreshIntervalSeconds")
+    let refreshMaxCount = call.getInt("refreshMaxCount")
     onMain { [weak self] in
       guard let self = self else { return }
       do {
-        try self.adViews.create(id: id, kind: kind, rawAdUnitId: adUnitIdentifier, sizes: sizes, collapseOnNoFill: collapseOnNoFill, placement: placement)
+        try self.adViews.create(id: id, kind: kind, rawAdUnitId: adUnitIdentifier, sizes: sizes, collapseOnNoFill: collapseOnNoFill,
+                                refreshIntervalSeconds: refreshIntervalSeconds, refreshMaxCount: refreshMaxCount, placement: placement)
         call.resolve()
       } catch {
         call.rejectPlugin(error.localizedDescription)

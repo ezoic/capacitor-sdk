@@ -137,6 +137,16 @@ export interface EzoicBannerAdOptions {
   size?: string;
   /** Collapse the view (height 0) when a load fails and no ad is displayed. Default `true`. */
   collapseOnNoFill?: boolean;
+  /**
+   * Seconds between automatic refreshes. Omit (or `null`) to follow the Ezoic
+   * server setting; `0` turns refresh off; values below 30 are raised to 30.
+   */
+  refreshIntervalSeconds?: number | null;
+  /**
+   * Maximum automatic refreshes per `load()`. Omit (or `null`) to follow the
+   * Ezoic server setting; `0` means no limit; values above 100 are capped at 100.
+   */
+  refreshMaxCount?: number | null;
   /** Where to overlay the view. Default `{ position: 'bottom' }`. */
   placement?: EzoicAdPlacement;
 }
@@ -292,6 +302,8 @@ export interface EzoicAdsPlugin {
     adUnitIdentifier: string;
     size?: string;
     collapseOnNoFill?: boolean;
+    refreshIntervalSeconds?: number;
+    refreshMaxCount?: number;
     placement: EzoicAdPlacement;
   }): Promise<void>;
   loadAdView(options: { id: string }): Promise<void>;

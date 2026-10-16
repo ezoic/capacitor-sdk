@@ -104,6 +104,9 @@ final class EzoicAdViewManager {
     let rawAdUnitId: String
     let sizes: [String]
     let collapseOnNoFill: Bool
+    /// Banner refresh overrides; nil follows the Ezoic server.
+    let refreshIntervalSeconds: Int?
+    let refreshMaxCount: Int?
     var placement: EzoicPlacement
     let host = EzoicOverlayView()
     var constraints: [NSLayoutConstraint] = []
@@ -117,13 +120,16 @@ final class EzoicAdViewManager {
     var nativeAd: EzoicNativeAd?
     var delegateProxy: AnyObject?
 
-    init(id: String, kind: EzoicAdViewKind, rawAdUnitId: String, sizes: [String], collapseOnNoFill: Bool, placement: EzoicPlacement) {
+    init(id: String, kind: EzoicAdViewKind, rawAdUnitId: String, sizes: [String], collapseOnNoFill: Bool,
+         refreshIntervalSeconds: Int?, refreshMaxCount: Int?, placement: EzoicPlacement) {
       self.id = id
       self.kind = kind
       self.adUnitId = Int(rawAdUnitId) ?? 0
       self.rawAdUnitId = rawAdUnitId
       self.sizes = sizes
       self.collapseOnNoFill = collapseOnNoFill
+      self.refreshIntervalSeconds = refreshIntervalSeconds
+      self.refreshMaxCount = refreshMaxCount
       self.placement = placement
       host.translatesAutoresizingMaskIntoConstraints = false
       host.clipsToBounds = true
@@ -180,10 +186,12 @@ final class EzoicAdViewManager {
 
   // MARK: - API
 
-  func create(id: String, kind: EzoicAdViewKind, rawAdUnitId: String, sizes: [String], collapseOnNoFill: Bool, placement: EzoicPlacement) throws {
+  func create(id: String, kind: EzoicAdViewKind, rawAdUnitId: String, sizes: [String], collapseOnNoFill: Bool,
+              refreshIntervalSeconds: Int?, refreshMaxCount: Int?, placement: EzoicPlacement) throws {
     guard entries[id] == nil else { throw EzoicPluginError.invalidState("An ad view with id \(id) already exists") }
     guard let layer = ensureOverlay() else { throw EzoicPluginError.invalidState("No WebView to overlay ads on") }
-    let entry = Entry(id: id, kind: kind, rawAdUnitId: rawAdUnitId, sizes: sizes, collapseOnNoFill: collapseOnNoFill, placement: placement)
+    let entry = Entry(id: id, kind: kind, rawAdUnitId: rawAdUnitId, sizes: sizes, collapseOnNoFill: collapseOnNoFill,
+                      refreshIntervalSeconds: refreshIntervalSeconds, refreshMaxCount: refreshMaxCount, placement: placement)
     entries[id] = entry
     layer.addSubview(entry.host)
     applyLayout(entry, in: layer)
@@ -317,6 +325,8 @@ final class EzoicAdViewManager {
   private func loadBanner(_ entry: Entry) {
     let view = EzoicBannerView(adUnitIdentifier: entry.adUnitId)
     view.collapseOnNoFill = entry.collapseOnNoFill
+    view.refreshIntervalSeconds = entry.refreshIntervalSeconds
+    view.refreshMaxCount = entry.refreshMaxCount
     let proxy = BannerDelegate(manager: self, entry: entry)
     entry.delegateProxy = proxy
     view.delegate = proxy

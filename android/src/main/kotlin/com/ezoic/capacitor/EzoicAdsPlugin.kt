@@ -219,11 +219,20 @@ class EzoicAdsPlugin : Plugin() {
       call.rejectPlugin(e.message ?: "Invalid createAdView options")
       return
     }
-    val sizes = call.getArray("size", null)?.toList<String>()?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+    // JS sends `size` as a comma-separated string; an array is accepted too.
+    val rawSizes = call.optString("size")?.split(",")
+      ?: call.getArray("size", null)?.toList<String>()
+      ?: emptyList()
+    val sizes = rawSizes.map { it.trim() }.filter { it.isNotEmpty() }
     val collapseOnNoFill = call.optBoolean("collapseOnNoFill", true)
+    // Absent = null: the native banner then follows the server.
+    val refresh = RefreshOverrides(
+      intervalSeconds = call.data.optIntOrNull("refreshIntervalSeconds"),
+      maxCount = call.data.optIntOrNull("refreshMaxCount"),
+    )
     runOnMain {
       try {
-        adViews.create(id, kind, adUnitIdentifier, sizes, collapseOnNoFill, placement)
+        adViews.create(id, kind, adUnitIdentifier, sizes, collapseOnNoFill, refresh, placement)
         call.resolve()
       } catch (e: Exception) {
         call.rejectPlugin(e.message ?: "Failed to create ad view")

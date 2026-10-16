@@ -27,6 +27,16 @@ export function normalizeSize(size: string | undefined): string | undefined {
   return out.length > 0 ? out : undefined;
 }
 
+/**
+ * Optional banner refresh override: a whole number of 0 or more (fractions are
+ * truncated); anything else (absent, null, negative, NaN, Infinity) is
+ * `undefined`, which leaves the native setting unset so the Ezoic server decides.
+ */
+export function normalizeRefreshOverride(value: number | null | undefined): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return undefined;
+  return Math.min(Math.trunc(value), 2147483647);
+}
+
 export function coerceAdUnitId(adUnitIdentifier: string | number): string {
   return String(adUnitIdentifier);
 }

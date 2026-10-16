@@ -12,7 +12,7 @@ and the `EzoicInstreamAd` controller. On the web every call is a safe no-op.
 ## Requirements
 
 - Capacitor 7 or 8.
-- iOS 15.0+ and Xcode 26.2+ (required by the native `EzoicAdsSDK` 1.15), Android `minSdk` 24+ and Kotlin 2.1+.
+- iOS 15.0+ and Xcode 26.2+ (required by the native `EzoicAdsSDK` 1.16), Android `minSdk` 24+ and Kotlin 2.1+.
 
 ## Installation
 
@@ -93,6 +93,21 @@ is a `"WxH"` string or comma-separated list (e.g. `"300x250"`,
 height 0 when a load fails and nothing is displayed. `onSizeChange` receives
 `{ width, height }` in CSS px after a fill, or `{ width: 0, height: 0 }` on
 collapse.
+
+Banner refresh is off unless Ezoic's server enables it for the placement. To
+control it from the app, pass `refreshIntervalSeconds` (0 = off, minimum 30)
+and/or `refreshMaxCount` (refreshes per `load()`, 0 = no limit, maximum 100) to
+`EzoicBannerAd.create`; leave them out to follow the server. The countdown only
+runs while at least half of the banner is on screen and the app is in the
+foreground.
+
+```ts
+const banner = await EzoicBannerAd.create({
+  adUnitIdentifier: '12345',
+  refreshIntervalSeconds: 60,
+  refreshMaxCount: 10,
+});
+```
 
 ### How ad views are shown
 
@@ -445,7 +460,7 @@ an unlabelled pageview.
 - `EzoicAds.isConsentRequired()` → `Promise<boolean | null>`
 - `EzoicAds.resetConsent()` → `Promise<void>`
 - `EzoicErrorCode.consentRequired` = `5001`; `getEzoicErrorCode(error)` → `number | undefined`
-- `EzoicBannerAd.create({ adUnitIdentifier, size?, collapseOnNoFill?, placement? })`,
+- `EzoicBannerAd.create({ adUnitIdentifier, size?, collapseOnNoFill?, refreshIntervalSeconds?, refreshMaxCount?, placement? })`,
   `EzoicOutstreamAd.create({ adUnitIdentifier, collapseOnNoFill?, placement? })`,
   `EzoicNativeAd.create({ adUnitIdentifier, placement? })` → `Promise<view>`, each with
   - `.setListeners({ onLoad, onError, onImpression, onClick, onOpen, onClose, onSizeChange* })` (*banner / outstream only)

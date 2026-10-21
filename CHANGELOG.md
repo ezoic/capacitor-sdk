@@ -4,6 +4,19 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.17.0
+
+Wraps Ezoic Ads SDK 1.17.0. Native ads (`EzoicNativeAd`) now register their
+rendered view with the native SDK, so they are reported as viewed (at least half
+on screen for one continuous second); no app changes needed. Ad reporting is
+more complete: viewability for every format (interstitial and rewarded at
+display), an outcome for every demand attempt including no-fills, Amazon fills,
+and the floor that filled. Full-screen ads and returning from the background no
+longer count as new pageviews. Known limitation: a `trackPageview` label for the
+launch screen that arrives more than ~1 s after `initialize` completes (outside
+a consent prompt) records a second launch pageview; label the launch screen
+before `initialize` or as soon as it completes. No plugin API changes.
+
 ## 1.16.0
 
 Wraps Ezoic Ads SDK 1.16.0. `EzoicBannerAd.create` adds optional

@@ -440,6 +440,7 @@ final class EzoicAdViewManager {
           adView.trailingAnchor.constraint(equalTo: entry.host.trailingAnchor),
           adView.bottomAnchor.constraint(equalTo: entry.host.bottomAnchor),
         ])
+        ad.registerView(adView)
         self.emitEvent(entry, "loaded")
       case .failure(let error):
         self.emitEvent(entry, "failed", ["message": error.localizedDescription, "code": error.code])

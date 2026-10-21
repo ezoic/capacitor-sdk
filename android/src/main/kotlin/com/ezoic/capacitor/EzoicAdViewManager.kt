@@ -355,6 +355,7 @@ internal class EzoicAdViewManager(
           adView,
           FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
         )
+        nativeAd.registerView(adView)
         emitEvent(entry, "loaded")
       }
 

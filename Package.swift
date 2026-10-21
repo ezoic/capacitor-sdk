@@ -14,7 +14,7 @@ let package = Package(
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", "7.0.0" ..< "9.0.0"),
         // Native Ezoic Ads SDK (pre-built XCFramework + Prebid / GMA / APS
         // transitive packages). Kept in lockstep with the plugin version.
-        .package(url: "https://github.com/ezoic/ezoic-swift-sdk-dist.git", from: "1.16.0"),
+        .package(url: "https://github.com/ezoic/ezoic-swift-sdk-dist.git", from: "1.17.0"),
         // The native-ad template imports GoogleMobileAds directly
         // (NativeAdView, MediaView, NativeAd). GMA 13 to match the SDK.
         .package(

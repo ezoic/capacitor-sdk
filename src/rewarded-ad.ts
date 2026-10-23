@@ -7,6 +7,7 @@ import type {
 import { rewardedAdEvents } from './events';
 import { coerceAdUnitId, mapRewardResult } from './helpers';
 import { EzoicAdsNative } from './plugin';
+import { sessionReady } from './session';
 
 /**
  * A rewarded ad. Use the static `load` to fetch an ad ahead of time, then call
@@ -47,6 +48,7 @@ export class EzoicRewardedAd {
     const id = coerceAdUnitId(adUnitIdentifier);
     const ad = new EzoicRewardedAd(id);
     try {
+      await sessionReady;
       await EzoicAdsNative.loadRewardedAd({ adUnitIdentifier: id });
       return ad;
     } catch (error) {

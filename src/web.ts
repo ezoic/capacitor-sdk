@@ -32,6 +32,10 @@ export class EzoicAdsWeb extends WebPlugin implements EzoicAdsPlugin {
     this.warnOnce();
   }
 
+  async resetSession(): Promise<void> {
+    // The package calls this on every page load, so it must not warn.
+  }
+
   async setGDPRConsent(_options: { applies: boolean; consentString?: string }): Promise<void> {
     this.warnOnce();
   }

@@ -23,6 +23,7 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
   public let jsName = "EzoicAds"
   public let pluginMethods: [CAPPluginMethod] = [
     CAPPluginMethod(name: "initialize", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "resetSession", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "trackPageview", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "setGDPRConsent", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "setGPPConsent", returnType: CAPPluginReturnPromise),
@@ -126,6 +127,18 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
           call.rejectEzoic(error, fallback: "Ezoic initialization failed")
         }
       }
+    }
+  }
+
+  /// Destroys every ad left by a previous page (reload, live update,
+  /// navigation, or the reload after the WebContent process was killed,
+  /// none of which Capacitor exposes to plugins). JS calls it once per page
+  /// load, before creating any ad.
+  @objc func resetSession(_ call: CAPPluginCall) {
+    onMain { [weak self] in
+      self?.adViews.destroyAll()
+      self?.fullScreen.destroyAll()
+      call.resolve()
     }
   }
 

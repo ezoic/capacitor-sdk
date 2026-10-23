@@ -246,6 +246,7 @@ final class EzoicAdViewManager {
     guard let entry = entries.removeValue(forKey: id) else { return }
     entry.destroyed = true
     entry.banner?.delegate = nil
+    entry.banner?.destroy()
     entry.banner?.removeFromSuperview()
     entry.outstream?.delegate = nil
     entry.outstream?.destroy()

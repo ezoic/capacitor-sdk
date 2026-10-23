@@ -3,6 +3,8 @@ package com.ezoic.capacitor
 import android.app.Activity
 import android.app.Application
 import android.util.Log
+import android.webkit.RenderProcessGoneDetail
+import android.webkit.WebView
 import com.ezoic.ads.sdk.adunits.EzoicNativeAdStyle
 import com.ezoic.ads.sdk.core.EzoicAds
 import com.ezoic.ads.sdk.core.EzoicConfiguration
@@ -12,6 +14,7 @@ import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
+import com.getcapacitor.WebViewListener
 import com.getcapacitor.annotation.CapacitorPlugin
 
 /**
@@ -32,6 +35,20 @@ class EzoicAdsPlugin : Plugin() {
   private lateinit var fullScreen: EzoicFullScreenAdManager
   private lateinit var instream: EzoicInstreamAdManager
 
+  /**
+   * Safety net for `resetSession`: a new page (reload, live update, hard
+   * navigation) or a crashed renderer orphans every ad of the old page.
+   * WebViewClient callbacks arrive on the main thread.
+   */
+  private val pageListener = object : WebViewListener() {
+    override fun onPageStarted(webView: WebView) = destroyAllAds()
+
+    override fun onRenderProcessGone(webView: WebView, detail: RenderProcessGoneDetail): Boolean {
+      destroyAllAds()
+      return false
+    }
+  }
+
   override fun load() {
     adViews = EzoicAdViewManager(context, { bridge?.webView }) { notifyListeners(AD_VIEW_EVENT, it, true) }
     fullScreen = EzoicFullScreenAdManager(
@@ -40,17 +57,35 @@ class EzoicAdsPlugin : Plugin() {
       emitInterstitial = { notifyListeners(INTERSTITIAL_EVENT, it, true) },
     )
     instream = EzoicInstreamAdManager(context)
+    // Bridge.Builder replaces the bridge's WebViewListener list after plugins
+    // load, so a listener added synchronously here would be dropped;
+    // executeOnMainThread always posts.
+    bridge?.let { b -> b.executeOnMainThread { b.addWebViewListener(pageListener) } }
   }
 
   override fun handleOnDestroy() {
     runOnMain {
-      adViews.destroyAll()
-      fullScreen.destroyAll()
-      instream.destroyAll()
+      bridge?.removeWebViewListener(pageListener)
+      destroyAllAds()
     }
   }
 
+  private fun destroyAllAds() {
+    adViews.destroyAll()
+    fullScreen.destroyAll()
+    instream.destroyAll()
+  }
+
   // --- lifecycle -----------------------------------------------------------
+
+  /** Destroys every ad left by a previous page; JS calls it once per page load. */
+  @PluginMethod
+  fun resetSession(call: PluginCall) {
+    runOnMain {
+      destroyAllAds()
+      call.resolve()
+    }
+  }
 
   @PluginMethod
   fun initialize(call: PluginCall) {

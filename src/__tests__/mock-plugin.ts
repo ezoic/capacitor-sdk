@@ -12,6 +12,7 @@ export function createMockPlugin() {
   const listeners = new Map<string, Listener[]>();
   const defaults: Record<string, unknown> = {
     initialize: undefined,
+    resetSession: undefined,
     setGDPRConsent: undefined,
     setGPPConsent: undefined,
     setSubjectToCOPPA: undefined,
@@ -44,6 +45,7 @@ export function createMockPlugin() {
   const plugin = {
     ...(methods as {
       initialize: ReturnType<typeof vi.fn>;
+      resetSession: ReturnType<typeof vi.fn>;
       setGDPRConsent: ReturnType<typeof vi.fn>;
       setGPPConsent: ReturnType<typeof vi.fn>;
       setSubjectToCOPPA: ReturnType<typeof vi.fn>;

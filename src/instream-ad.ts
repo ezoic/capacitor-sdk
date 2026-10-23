@@ -1,5 +1,6 @@
 import type { EzoicInstreamImpressionOptions, EzoicInstreamLoadOptions } from './definitions';
 import { EzoicAdsNative } from './plugin';
+import { sessionReady } from './session';
 
 /**
  * An instream video ad controller. Instream video runs inside the host app's
@@ -50,6 +51,7 @@ export class EzoicInstreamAd {
    * Safe to call again after a previous load resolves (multi-use).
    */
   async load(options: EzoicInstreamLoadOptions = {}): Promise<string> {
+    await sessionReady;
     const { adTagUrl } = await EzoicAdsNative.loadInstreamAd({
       adUnitIdentifier: this.adUnitIdentifier,
       contentUrl: options.contentUrl,

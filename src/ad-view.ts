@@ -21,6 +21,7 @@ import {
   normalizeSize,
 } from './helpers';
 import { EzoicAdsNative } from './plugin';
+import { SESSION_PREFIX, sessionReady } from './session';
 
 let nextViewId = 0;
 
@@ -99,7 +100,7 @@ export abstract class EzoicAdViewBase<L extends EzoicNativeAdListeners> {
   private readonly onEvent = (event: EzoicAdViewEvent) => this.handleEvent(event);
 
   protected constructor(kind: EzoicAdViewKind, adUnitIdentifier: string, placement: EzoicAdPlacement) {
-    this.id = `ezoic-${kind}-${++nextViewId}`;
+    this.id = `ezoic-${SESSION_PREFIX}-${kind}-${++nextViewId}`;
     this.adUnitIdentifier = adUnitIdentifier;
     this.placement = placement;
     adViewEvents.subscribe(this.id, this.onEvent);
@@ -269,6 +270,7 @@ export class EzoicBannerAd extends EzoicAdViewBase<EzoicAdViewListeners> {
     const refreshIntervalSeconds = normalizeRefreshOverride(options.refreshIntervalSeconds);
     const refreshMaxCount = normalizeRefreshOverride(options.refreshMaxCount);
     try {
+      await sessionReady;
       await EzoicAdsNative.createAdView({
         id: ad.id,
         kind: 'banner',
@@ -304,6 +306,7 @@ export class EzoicOutstreamAd extends EzoicAdViewBase<EzoicAdViewListeners> {
     const placement = normalizePlacement(options.placement);
     const ad = new EzoicOutstreamAd(coerceAdUnitId(options.adUnitIdentifier), placement);
     try {
+      await sessionReady;
       await EzoicAdsNative.createAdView({
         id: ad.id,
         kind: 'outstream',
@@ -335,6 +338,7 @@ export class EzoicNativeAd extends EzoicAdViewBase<EzoicNativeAdListeners> {
     const placement = normalizePlacement(options.placement);
     const ad = new EzoicNativeAd(coerceAdUnitId(options.adUnitIdentifier), placement);
     try {
+      await sessionReady;
       await EzoicAdsNative.createAdView({
         id: ad.id,
         kind: 'native',

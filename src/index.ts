@@ -1,7 +1,8 @@
 import { consentFailure, parseConsentOutcome } from './consent';
 import type { EzoicConfig, EzoicConsentOutcome } from './definitions';
-import { normalizeConfig } from './helpers';
+import { getEzoicErrorCode, normalizeConfig } from './helpers';
 import { EzoicAdsNative } from './plugin';
+import './session';
 
 export type {
   EzoicAdError,
@@ -35,6 +36,26 @@ export { EzoicInterstitialAd } from './interstitial-ad';
 export { EzoicInstreamAd } from './instream-ad';
 export { EzoicAdsNative } from './plugin';
 
+/** Native `EzoicError.AlreadyInitialized`. */
+const ALREADY_INITIALIZED = 1002;
+
+let initialization: Promise<void> | null = null;
+
+/**
+ * The native SDK outlives the page, so after a reload (or live update) it is
+ * already initialized and SDKs before 1.19 reject with `AlreadyInitialized`.
+ * That counts as success, including the consent dialog native would have
+ * presented after a fresh init.
+ */
+function initializeNative(config: EzoicConfig): Promise<void> {
+  return EzoicAdsNative.initialize(config).catch((error: unknown) => {
+    if (getEzoicErrorCode(error) !== ALREADY_INITIALIZED) throw error;
+    if (config.autoPresentConsent !== false) {
+      EzoicAdsNative.presentConsentIfRequired().catch(() => undefined);
+    }
+  });
+}
+
 function presentConsent(call: () => Promise<unknown>): Promise<EzoicConsentOutcome> {
   return call().then(parseConsentOutcome, (e: unknown) =>
     consentFailure(-1, e instanceof Error ? e.message : String(e)),
@@ -51,9 +72,21 @@ export const EzoicAds = {
    * Initializes the native SDK. Resolves once the ad stack is ready; rejects
    * with the native error (see `getEzoicErrorCode`) if the init request fails
    * or the app is blocked.
+   *
+   * Safe to call on every page load: the native SDK stays initialized across
+   * WebView reloads and live updates, and that resolves like a fresh init.
+   * Calls within one page share a single native init (the first call's
+   * `config` wins); after a rejection the next call retries.
    */
   initialize(config: EzoicConfig): Promise<void> {
-    return EzoicAdsNative.initialize(normalizeConfig(config));
+    const options = normalizeConfig(config);
+    if (!initialization) {
+      initialization = initializeNative(options).catch((error: unknown) => {
+        initialization = null;
+        throw error;
+      });
+    }
+    return initialization;
   },
   /**
    * Sets GDPR applicability and the TCF consent string yourself. Mutually

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EzoicAds, EzoicErrorCode, getEzoicErrorCode } from '../index';
+import { EzoicErrorCode, getEzoicErrorCode } from '../index';
+import type { EzoicAds as EzoicAdsApi } from '../index';
+
+import { flush } from './mock-plugin';
 
 const { plugin } = await vi.hoisted(async () => {
   const { createMockPlugin } = await import('./mock-plugin');
@@ -9,9 +12,16 @@ const { plugin } = await vi.hoisted(async () => {
 
 vi.mock('../plugin', () => ({ EzoicAdsNative: plugin }));
 
-beforeEach(() => {
+// A fresh module per test: `initialize` memoizes per page (module instance).
+let EzoicAds: typeof EzoicAdsApi;
+
+beforeEach(async () => {
   plugin.reset();
+  vi.resetModules();
+  ({ EzoicAds } = await import('../index'));
 });
+
+const alreadyInitialized = () => Object.assign(new Error('already'), { code: '1002', data: { code: 1002 } });
 
 describe('EzoicAds.initialize', () => {
   it('forwards a normalized config', async () => {
@@ -34,6 +44,46 @@ describe('EzoicAds.initialize', () => {
     plugin.initialize.mockRejectedValue(error);
     await expect(EzoicAds.initialize({ domain: 'example.com' })).rejects.toBe(error);
     expect(getEzoicErrorCode(error)).toBe(1004);
+  });
+
+  it('treats AlreadyInitialized (1002, after a WebView reload) as success and presents consent', async () => {
+    plugin.initialize.mockRejectedValue(alreadyInitialized());
+    await expect(EzoicAds.initialize({ domain: 'example.com' })).resolves.toBeUndefined();
+    await flush();
+    expect(plugin.presentConsentIfRequired).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips the consent dialog after 1002 when autoPresentConsent is false', async () => {
+    plugin.initialize.mockRejectedValue(alreadyInitialized());
+    await expect(EzoicAds.initialize({ domain: 'example.com', autoPresentConsent: false })).resolves.toBeUndefined();
+    await flush();
+    expect(plugin.presentConsentIfRequired).not.toHaveBeenCalled();
+  });
+
+  it('ignores a failing consent dialog after 1002', async () => {
+    plugin.initialize.mockRejectedValue(alreadyInitialized());
+    plugin.presentConsentIfRequired.mockRejectedValue(new Error('No foreground Activity'));
+    await expect(EzoicAds.initialize({ domain: 'example.com' })).resolves.toBeUndefined();
+    await flush();
+  });
+
+  it('shares one native init between concurrent and later calls', async () => {
+    let finish: () => void = () => undefined;
+    plugin.initialize.mockReturnValue(new Promise<void>((r) => (finish = r)));
+    const first = EzoicAds.initialize({ domain: 'example.com' });
+    const second = EzoicAds.initialize({ domain: 'example.com' });
+    expect(second).toBe(first);
+    finish();
+    await expect(Promise.all([first, second])).resolves.toEqual([undefined, undefined]);
+    await EzoicAds.initialize({ domain: 'example.com' });
+    expect(plugin.initialize).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries the native init after a rejection', async () => {
+    plugin.initialize.mockRejectedValueOnce(new Error('network'));
+    await expect(EzoicAds.initialize({ domain: 'example.com' })).rejects.toThrow('network');
+    await expect(EzoicAds.initialize({ domain: 'example.com' })).resolves.toBeUndefined();
+    expect(plugin.initialize).toHaveBeenCalledTimes(2);
   });
 });
 

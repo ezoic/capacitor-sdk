@@ -330,6 +330,12 @@ export interface EzoicFullScreenAdEvent {
  */
 export interface EzoicAdsPlugin {
   initialize(options: EzoicConfig): Promise<void>;
+  /**
+   * Destroys every ad view, full-screen ad and instream controller, and the
+   * overlay. Called once per page load, before any ad is created, so ads
+   * left by a previous page (reload, live update, navigation) are torn down.
+   */
+  resetSession(): Promise<void>;
   setGDPRConsent(options: { applies: boolean; consentString?: string }): Promise<void>;
   setGPPConsent(options: { gppString?: string; sectionIds?: string }): Promise<void>;
   setSubjectToCOPPA(options: { value: boolean }): Promise<void>;

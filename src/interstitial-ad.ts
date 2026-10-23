@@ -2,6 +2,7 @@ import type { EzoicFullScreenAdEvent, EzoicInterstitialAdListeners } from './def
 import { interstitialAdEvents } from './events';
 import { coerceAdUnitId } from './helpers';
 import { EzoicAdsNative } from './plugin';
+import { sessionReady } from './session';
 
 /**
  * An interstitial ad. Use the static `load` to fetch an ad ahead of time, then
@@ -43,6 +44,7 @@ export class EzoicInterstitialAd {
     const id = coerceAdUnitId(adUnitIdentifier);
     const ad = new EzoicInterstitialAd(id);
     try {
+      await sessionReady;
       await EzoicAdsNative.loadInterstitialAd({ adUnitIdentifier: id });
       return ad;
     } catch (error) {

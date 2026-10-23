@@ -160,9 +160,52 @@ export interface EzoicOutstreamAdOptions {
   placement?: EzoicAdPlacement;
 }
 
+/**
+ * Appearance of the native ad template. Sizes are in CSS px (dp / points).
+ * Colors are hex strings: `#RGB`, `#RGBA`, `#RRGGBB` or `#RRGGBBAA`. Unset
+ * colors follow the platform theme, including dark mode.
+ *
+ * `mediaHeight` is never below 120 and `adLabelText` is never blank: Google
+ * requires a minimum media size and an ad label on native ads.
+ */
+export interface EzoicNativeAdStyle {
+  /** Card background. Default: transparent. */
+  backgroundColor?: string;
+  /** Card corner radius. Default: 0. */
+  cornerRadius?: number;
+  /** Padding inside the card. Default: 8. */
+  padding?: number;
+  headlineTextColor?: string;
+  /** Default: 16 (bold). */
+  headlineTextSize?: number;
+  advertiserTextColor?: string;
+  /** Default: 12. */
+  advertiserTextSize?: number;
+  bodyTextColor?: string;
+  /** Default: 14. */
+  bodyTextSize?: number;
+  /** Call-to-action button fill. Default: the platform button. */
+  callToActionBackgroundColor?: string;
+  callToActionTextColor?: string;
+  /** Default: 14. */
+  callToActionTextSize?: number;
+  /** Applies when `callToActionBackgroundColor` is set. Default: 4. */
+  callToActionCornerRadius?: number;
+  /** Height of the media view, at least 120. Default: 175. */
+  mediaHeight?: number;
+  /** Text of the ad label, e.g. "Sponsored". Default: "Ad". */
+  adLabelText?: string;
+  /** Default: `#202124`. */
+  adLabelTextColor?: string;
+  /** Default: `#FBBC04`. */
+  adLabelBackgroundColor?: string;
+}
+
 /** Options for `EzoicNativeAd.create`. */
 export interface EzoicNativeAdOptions {
   adUnitIdentifier: string | number;
+  /** Colors, text sizes, corner radius and more for the ad template. */
+  adStyle?: EzoicNativeAdStyle;
   /** Where to overlay the view. Default `{ position: 'bottom' }`. */
   placement?: EzoicAdPlacement;
 }
@@ -304,12 +347,14 @@ export interface EzoicAdsPlugin {
     collapseOnNoFill?: boolean;
     refreshIntervalSeconds?: number;
     refreshMaxCount?: number;
+    adStyle?: EzoicNativeAdStyle;
     placement: EzoicAdPlacement;
   }): Promise<void>;
   loadAdView(options: { id: string }): Promise<void>;
   showAdView(options: { id: string }): Promise<void>;
   hideAdView(options: { id: string }): Promise<void>;
   setAdViewPlacement(options: { id: string; placement: EzoicAdPlacement }): Promise<void>;
+  setAdViewStyle(options: { id: string; adStyle: EzoicNativeAdStyle }): Promise<void>;
   destroyAdView(options: { id: string }): Promise<void>;
 
   loadRewardedAd(options: { adUnitIdentifier: string }): Promise<void>;

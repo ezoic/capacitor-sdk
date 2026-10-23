@@ -118,6 +118,8 @@ final class EzoicAdViewManager {
     var banner: EzoicBannerView?
     var outstream: EzoicOutstreamAdView?
     var nativeAd: EzoicNativeAd?
+    var nativeStyle = EzoicNativeAdStyle()
+    var nativeTemplate: EzoicNativeAdTemplateView?
     var delegateProxy: AnyObject?
 
     init(id: String, kind: EzoicAdViewKind, rawAdUnitId: String, sizes: [String], collapseOnNoFill: Bool,
@@ -187,11 +189,13 @@ final class EzoicAdViewManager {
   // MARK: - API
 
   func create(id: String, kind: EzoicAdViewKind, rawAdUnitId: String, sizes: [String], collapseOnNoFill: Bool,
-              refreshIntervalSeconds: Int?, refreshMaxCount: Int?, placement: EzoicPlacement) throws {
+              refreshIntervalSeconds: Int?, refreshMaxCount: Int?, placement: EzoicPlacement,
+              nativeStyle: EzoicNativeAdStyle = EzoicNativeAdStyle()) throws {
     guard entries[id] == nil else { throw EzoicPluginError.invalidState("An ad view with id \(id) already exists") }
     guard let layer = ensureOverlay() else { throw EzoicPluginError.invalidState("No WebView to overlay ads on") }
     let entry = Entry(id: id, kind: kind, rawAdUnitId: rawAdUnitId, sizes: sizes, collapseOnNoFill: collapseOnNoFill,
                       refreshIntervalSeconds: refreshIntervalSeconds, refreshMaxCount: refreshMaxCount, placement: placement)
+    entry.nativeStyle = nativeStyle
     entries[id] = entry
     layer.addSubview(entry.host)
     applyLayout(entry, in: layer)
@@ -231,6 +235,13 @@ final class EzoicAdViewManager {
     if let layer = overlay { applyLayout(entry, in: layer) }
   }
 
+  /// Styles a native ad view; re-renders an ad already showing. No effect on other kinds.
+  func setNativeStyle(id: String, style: EzoicNativeAdStyle) throws {
+    let entry = try self.entry(id)
+    entry.nativeStyle = style
+    entry.nativeTemplate?.style = style
+  }
+
   func destroy(id: String) {
     guard let entry = entries.removeValue(forKey: id) else { return }
     entry.destroyed = true
@@ -244,6 +255,7 @@ final class EzoicAdViewManager {
     entry.banner = nil
     entry.outstream = nil
     entry.nativeAd = nil
+    entry.nativeTemplate = nil
     entry.delegateProxy = nil
     NSLayoutConstraint.deactivate(entry.constraints)
     entry.host.subviews.forEach { $0.removeFromSuperview() }
@@ -420,7 +432,7 @@ final class EzoicAdViewManager {
       }
       switch result {
       case .success(let ad):
-        guard let gmaAd = ad.nativeAd else {
+        guard ad.nativeAd != nil else {
           ad.destroy()
           self.emitEvent(entry, "failed", ["message": "Native ad loaded without content", "code": 0])
           return
@@ -431,16 +443,20 @@ final class EzoicAdViewManager {
         let proxy = NativeDelegate(manager: self, entry: entry)
         entry.delegateProxy = proxy
         ad.delegate = proxy
-        let adView = EzoicNativeAdTemplate.render(gmaAd)
+        // The SDK template renders the ad and registers it for viewability.
+        let template = EzoicNativeAdTemplateView()
+        template.translatesAutoresizingMaskIntoConstraints = false
+        template.style = entry.nativeStyle
         entry.host.subviews.forEach { $0.removeFromSuperview() }
-        entry.host.addSubview(adView)
+        entry.host.addSubview(template)
         NSLayoutConstraint.activate([
-          adView.topAnchor.constraint(equalTo: entry.host.topAnchor),
-          adView.leadingAnchor.constraint(equalTo: entry.host.leadingAnchor),
-          adView.trailingAnchor.constraint(equalTo: entry.host.trailingAnchor),
-          adView.bottomAnchor.constraint(equalTo: entry.host.bottomAnchor),
+          template.topAnchor.constraint(equalTo: entry.host.topAnchor),
+          template.leadingAnchor.constraint(equalTo: entry.host.leadingAnchor),
+          template.trailingAnchor.constraint(equalTo: entry.host.trailingAnchor),
+          template.bottomAnchor.constraint(equalTo: entry.host.bottomAnchor),
         ])
-        ad.registerView(adView)
+        template.nativeAd = ad
+        entry.nativeTemplate = template
         self.emitEvent(entry, "loaded")
       case .failure(let error):
         self.emitEvent(entry, "failed", ["message": error.localizedDescription, "code": error.code])

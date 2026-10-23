@@ -19,6 +19,7 @@ export type {
   EzoicInterstitialAdListeners,
   EzoicNativeAdListeners,
   EzoicNativeAdOptions,
+  EzoicNativeAdStyle,
   EzoicOutstreamAdOptions,
   EzoicReward,
   EzoicRewardedAdListeners,

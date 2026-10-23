@@ -1,27 +1,21 @@
 package com.ezoic.capacitor
 
 import android.content.Context
-import android.graphics.Typeface
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import com.ezoic.ads.sdk.adunits.EzoicBannerView
 import com.ezoic.ads.sdk.adunits.EzoicBannerViewListener
 import com.ezoic.ads.sdk.adunits.EzoicNativeAd
 import com.ezoic.ads.sdk.adunits.EzoicNativeAdListener
 import com.ezoic.ads.sdk.adunits.EzoicNativeAdLoadListener
+import com.ezoic.ads.sdk.adunits.EzoicNativeAdStyle
+import com.ezoic.ads.sdk.adunits.EzoicNativeAdTemplateView
 import com.ezoic.ads.sdk.adunits.EzoicOutstreamAdView
 import com.ezoic.ads.sdk.adunits.EzoicOutstreamAdViewListener
 import com.ezoic.ads.sdk.core.EzoicError
 import com.getcapacitor.JSObject
-import com.google.android.gms.ads.nativead.MediaView
-import com.google.android.gms.ads.nativead.NativeAd
-import com.google.android.gms.ads.nativead.NativeAdView
 import kotlin.math.roundToInt
 
 /**
@@ -109,6 +103,8 @@ internal class EzoicAdViewManager(
     var banner: EzoicBannerView? = null
     var outstream: EzoicOutstreamAdView? = null
     var nativeAd: EzoicNativeAd? = null
+    var nativeStyle: EzoicNativeAdStyle = EzoicNativeAdStyle()
+    var nativeTemplate: EzoicNativeAdTemplateView? = null
   }
 
   private val entries = LinkedHashMap<String, Entry>()
@@ -174,11 +170,13 @@ internal class EzoicAdViewManager(
     collapseOnNoFill: Boolean,
     refresh: RefreshOverrides,
     placement: Placement,
+    nativeStyle: EzoicNativeAdStyle = EzoicNativeAdStyle(),
   ) {
     require(!entries.containsKey(id)) { "An ad view with id $id already exists" }
     val layer = ensureOverlay() ?: throw IllegalStateException("No WebView to overlay ads on")
     val host = FrameLayout(context)
     val entry = Entry(id, kind, rawAdUnitId.toIntOrNull() ?: 0, rawAdUnitId, sizes, collapseOnNoFill, refresh, placement, host)
+    entry.nativeStyle = nativeStyle
     entries[id] = entry
     layer.addView(host, layoutParamsFor(entry))
     applyVisibility(entry)
@@ -217,6 +215,13 @@ internal class EzoicAdViewManager(
     entry.host.layoutParams = layoutParamsFor(entry)
   }
 
+  /** Styles a native ad view; re-renders an ad already showing. No effect on other kinds. */
+  fun setNativeStyle(id: String, style: EzoicNativeAdStyle) {
+    val entry = entry(id)
+    entry.nativeStyle = style
+    entry.nativeTemplate?.style = style
+  }
+
   fun destroy(id: String) {
     val entry = entries.remove(id) ?: return
     entry.destroyed = true
@@ -226,6 +231,7 @@ internal class EzoicAdViewManager(
     entry.banner = null
     entry.outstream = null
     entry.nativeAd = null
+    entry.nativeTemplate = null
     entry.host.removeAllViews()
     (entry.host.parent as? ViewGroup)?.removeView(entry.host)
     removeOverlayIfEmpty()
@@ -335,7 +341,7 @@ internal class EzoicAdViewManager(
           nativeAd.destroy()
           return
         }
-        val gmaAd = nativeAd.nativeAd ?: run {
+        if (nativeAd.nativeAd == null) {
           nativeAd.destroy()
           emitEvent(entry, "failed", errorPayload("Native ad loaded without content", 0))
           return
@@ -349,13 +355,16 @@ internal class EzoicAdViewManager(
           override fun onNativeAdOpened(nativeAd: EzoicNativeAd) = emitEvent(entry, "opened")
           override fun onNativeAdClosed(nativeAd: EzoicNativeAd) = emitEvent(entry, "closed")
         }
-        val adView = buildNativeTemplate(context, gmaAd)
+        // The SDK template renders the ad and registers it for viewability.
+        val template = EzoicNativeAdTemplateView(context)
+        template.style = entry.nativeStyle
+        template.nativeAd = nativeAd
         entry.host.removeAllViews()
         entry.host.addView(
-          adView,
+          template,
           FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
         )
-        nativeAd.registerView(adView)
+        entry.nativeTemplate = template
         emitEvent(entry, "loaded")
       }
 
@@ -364,111 +373,6 @@ internal class EzoicAdViewManager(
         emitEvent(entry, "failed", errorPayload(error.message, error.code))
       }
     })
-  }
-
-  /**
-   * Builds a template [NativeAdView] in code (no `res/` layouts), matching the
-   * React Native and Flutter wrappers: a header row (icon + headline /
-   * advertiser), a [MediaView], the body text and a call-to-action button.
-   * Only the asset views present on [gmaAd] are created and registered;
-   * [NativeAdView.setNativeAd] is called last, as GMA requires.
-   */
-  private fun buildNativeTemplate(context: Context, gmaAd: NativeAd): NativeAdView {
-    val adView = NativeAdView(context)
-
-    val root = LinearLayout(context).apply {
-      orientation = LinearLayout.VERTICAL
-      layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-      val pad = dp(8)
-      setPadding(pad, pad, pad, pad)
-    }
-
-    val headerRow = LinearLayout(context).apply {
-      orientation = LinearLayout.HORIZONTAL
-      layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-    }
-
-    var iconView: ImageView? = null
-    gmaAd.icon?.drawable?.let { drawable ->
-      val iv = ImageView(context).apply {
-        layoutParams = LinearLayout.LayoutParams(dp(40), dp(40))
-        setImageDrawable(drawable)
-      }
-      headerRow.addView(iv)
-      iconView = iv
-    }
-
-    val textColumn = LinearLayout(context).apply {
-      orientation = LinearLayout.VERTICAL
-      layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { leftMargin = dp(8) }
-    }
-
-    var headlineView: TextView? = null
-    gmaAd.headline?.let { text ->
-      val tv = TextView(context).apply {
-        this.text = text
-        setTypeface(typeface, Typeface.BOLD)
-        textSize = 16f
-      }
-      textColumn.addView(tv)
-      headlineView = tv
-    }
-
-    var advertiserView: TextView? = null
-    gmaAd.advertiser?.let { text ->
-      val tv = TextView(context).apply {
-        this.text = text
-        textSize = 12f
-      }
-      textColumn.addView(tv)
-      advertiserView = tv
-    }
-
-    headerRow.addView(textColumn)
-    root.addView(headerRow)
-
-    var mediaView: MediaView? = null
-    gmaAd.mediaContent?.let { content ->
-      val mv = MediaView(context).apply {
-        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(175)).apply { topMargin = dp(8) }
-        mediaContent = content
-      }
-      root.addView(mv)
-      mediaView = mv
-    }
-
-    var bodyView: TextView? = null
-    gmaAd.body?.let { text ->
-      val tv = TextView(context).apply {
-        this.text = text
-        textSize = 14f
-        setPadding(0, dp(8), 0, 0)
-      }
-      root.addView(tv)
-      bodyView = tv
-    }
-
-    var callToActionView: Button? = null
-    gmaAd.callToAction?.let { text ->
-      val btn = Button(context).apply {
-        this.text = text
-        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-          topMargin = dp(8)
-        }
-      }
-      root.addView(btn)
-      callToActionView = btn
-    }
-
-    adView.addView(root)
-    adView.headlineView = headlineView
-    adView.bodyView = bodyView
-    adView.iconView = iconView
-    adView.advertiserView = advertiserView
-    adView.callToActionView = callToActionView
-    adView.mediaView = mediaView
-    adView.setNativeAd(gmaAd)
-    return adView
   }
 
   // --- events ------------------------------------------------------------

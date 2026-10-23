@@ -3,6 +3,7 @@ package com.ezoic.capacitor
 import android.app.Activity
 import android.app.Application
 import android.util.Log
+import com.ezoic.ads.sdk.adunits.EzoicNativeAdStyle
 import com.ezoic.ads.sdk.core.EzoicAds
 import com.ezoic.ads.sdk.core.EzoicConfiguration
 import com.ezoic.ads.sdk.privacy.cmp.ConsentDecisionType
@@ -230,9 +231,10 @@ class EzoicAdsPlugin : Plugin() {
       intervalSeconds = call.data.optIntOrNull("refreshIntervalSeconds"),
       maxCount = call.data.optIntOrNull("refreshMaxCount"),
     )
+    val nativeStyle = nativeStyleFrom(call.getObject("adStyle", null))
     runOnMain {
       try {
-        adViews.create(id, kind, adUnitIdentifier, sizes, collapseOnNoFill, refresh, placement)
+        adViews.create(id, kind, adUnitIdentifier, sizes, collapseOnNoFill, refresh, placement, nativeStyle)
         call.resolve()
       } catch (e: Exception) {
         call.rejectPlugin(e.message ?: "Failed to create ad view")
@@ -262,7 +264,18 @@ class EzoicAdsPlugin : Plugin() {
   }
 
   @PluginMethod
+  fun setAdViewStyle(call: PluginCall) {
+    val style = nativeStyleFrom(call.getObject("adStyle", null))
+    withAdView(call) { adViews.setNativeStyle(it, style) }
+  }
+
+  @PluginMethod
   fun destroyAdView(call: PluginCall) = withAdView(call) { adViews.destroy(it) }
+
+  private fun nativeStyleFrom(obj: JSObject?): EzoicNativeAdStyle {
+    if (obj == null) return EzoicNativeAdStyle()
+    return EzoicNativeAdStyle.fromMap(obj.keys().asSequence().associateWith { obj.opt(it) })
+  }
 
   private fun withAdView(call: PluginCall, block: (String) -> Unit) {
     val id = call.optString("id")

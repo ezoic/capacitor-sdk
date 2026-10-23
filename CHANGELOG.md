@@ -4,6 +4,24 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.19.0
+
+Wraps Ezoic Ads SDK 1.19.0, which sends COPPA to Google Mobile Ads, IMA and
+Amazon, keeps the device id only while consent allows storage, sends a launch
+pageview for apps that initialize after their first screen, and no longer holds
+ad requests for 2 s waiting on a pageview id.
+
+- Fixed: after a WebView reload, Capacitor live update, hard navigation, or iOS
+  reloading the page after its web process was killed, the previous page's ads
+  stayed on screen and kept refreshing, and new ads failed with duplicate ids.
+  Each page load now tears down the previous page's ads (Android also does this
+  on page start and when the WebView renderer crashes). Ads don't survive a
+  reload; recreate them after the page loads.
+- Fixed: `EzoicAds.initialize` after a reload rejected with code 1002. It now
+  resolves, and calls within one page share a single native initialization (the
+  first config wins).
+- Fixed (iOS): destroying a banner now destroys the native banner explicitly.
+
 ## 1.18.0
 
 Wraps Ezoic Ads SDK 1.18.0. Native ads are now drawn by the native SDKs' shared

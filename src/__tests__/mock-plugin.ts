@@ -25,6 +25,7 @@ export function createMockPlugin() {
     showAdView: undefined,
     hideAdView: undefined,
     setAdViewPlacement: undefined,
+    setAdViewStyle: undefined,
     destroyAdView: undefined,
     loadRewardedAd: undefined,
     showRewardedAd: { earned: false, type: '', amount: 0 },
@@ -56,6 +57,7 @@ export function createMockPlugin() {
       showAdView: ReturnType<typeof vi.fn>;
       hideAdView: ReturnType<typeof vi.fn>;
       setAdViewPlacement: ReturnType<typeof vi.fn>;
+      setAdViewStyle: ReturnType<typeof vi.fn>;
       destroyAdView: ReturnType<typeof vi.fn>;
       loadRewardedAd: ReturnType<typeof vi.fn>;
       showRewardedAd: ReturnType<typeof vi.fn>;

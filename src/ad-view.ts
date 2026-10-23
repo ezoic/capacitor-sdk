@@ -9,10 +9,17 @@ import type {
   EzoicBannerAdOptions,
   EzoicNativeAdListeners,
   EzoicNativeAdOptions,
+  EzoicNativeAdStyle,
   EzoicOutstreamAdOptions,
 } from './definitions';
 import { adViewEvents } from './events';
-import { coerceAdUnitId, normalizePlacement, normalizeRefreshOverride, normalizeSize } from './helpers';
+import {
+  coerceAdUnitId,
+  normalizeNativeAdStyle,
+  normalizePlacement,
+  normalizeRefreshOverride,
+  normalizeSize,
+} from './helpers';
 import { EzoicAdsNative } from './plugin';
 
 let nextViewId = 0;
@@ -221,7 +228,7 @@ export abstract class EzoicAdViewBase<L extends EzoicNativeAdListeners> {
     (this.listeners as EzoicAdViewListeners).onSizeChange?.(size);
   }
 
-  private assertAlive(): void {
+  protected assertAlive(): void {
     if (this.destroyed) {
       throw new Error(`This ${this.constructor.name} has been destroyed.`);
     }
@@ -332,6 +339,7 @@ export class EzoicNativeAd extends EzoicAdViewBase<EzoicNativeAdListeners> {
         id: ad.id,
         kind: 'native',
         adUnitIdentifier: ad.adUnitIdentifier,
+        ...(options.adStyle && { adStyle: normalizeNativeAdStyle(options.adStyle) }),
         placement,
       });
       return ad;
@@ -339,5 +347,11 @@ export class EzoicNativeAd extends EzoicAdViewBase<EzoicNativeAdListeners> {
       ad.release();
       throw error;
     }
+  }
+
+  /** Restyles the template; an ad already showing is redrawn without reloading. */
+  setStyle(adStyle: EzoicNativeAdStyle): Promise<void> {
+    this.assertAlive();
+    return EzoicAdsNative.setAdViewStyle({ id: this.id, adStyle: normalizeNativeAdStyle(adStyle) });
   }
 }

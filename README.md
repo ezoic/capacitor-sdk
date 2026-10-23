@@ -12,7 +12,7 @@ and the `EzoicInstreamAd` controller. On the web every call is a safe no-op.
 ## Requirements
 
 - Capacitor 7 or 8.
-- iOS 15.0+ and Xcode 26.2+ (required by the native `EzoicAdsSDK` 1.17), Android `minSdk` 24+ and Kotlin 2.1+.
+- iOS 15.0+ and Xcode 26.2+ (required by the native `EzoicAdsSDK` 1.18), Android `minSdk` 24+ and Kotlin 2.1+.
 
 ## Installation
 
@@ -166,6 +166,47 @@ nativeAd.setListeners({
 nativeAd.attachTo(document.getElementById('native-slot')!);
 await nativeAd.load();
 ```
+
+#### Styling native ads
+
+Pass `adStyle` to restyle the template to match your app, or call
+`setStyle(adStyle)` later to restyle it in place without reloading the ad.
+Every key is optional; leave one out to keep the default (colors left out
+follow the system light/dark theme). Colors are CSS hex strings (`#RGB`,
+`#RGBA`, `#RRGGBB` or `#RRGGBBAA`). Sizes are in CSS px.
+
+```ts
+const nativeAd = await EzoicNativeAd.create({
+  adUnitIdentifier: '123456',
+  adStyle: {
+    backgroundColor: '#1E1E2E',
+    cornerRadius: 16,
+    headlineTextColor: '#FFFFFF',
+    bodyTextColor: '#CDD6F4',
+    callToActionBackgroundColor: '#89B4FA',
+    callToActionTextColor: '#1E1E2E',
+    callToActionCornerRadius: 22,
+    adLabelText: 'Sponsored',
+  },
+});
+await nativeAd.setStyle({ backgroundColor: '#E8F5E9', headlineTextColor: '#1B5E20' });
+```
+
+| Key | Default | Notes |
+| --- | --- | --- |
+| `backgroundColor` | transparent | Card background |
+| `cornerRadius` | `0` | Card corners; content is clipped to them |
+| `padding` | `8` | Inner padding |
+| `headlineTextColor` / `headlineTextSize` | theme / `16` | Headline is bold |
+| `advertiserTextColor` / `advertiserTextSize` | theme / `12` | |
+| `bodyTextColor` / `bodyTextSize` | theme / `14` | |
+| `callToActionBackgroundColor` / `callToActionTextColor` | platform button | |
+| `callToActionTextSize` / `callToActionCornerRadius` | `14` / `4` | Radius applies when a background color is set |
+| `mediaHeight` | `175` | Minimum `120`, as Google requires for native media |
+| `adLabelText` | `"Ad"` | The ad attribution badge; cannot be blank |
+| `adLabelTextColor` / `adLabelBackgroundColor` | `#202124` / `#FBBC04` | |
+
+`setStyle` replaces the whole style, so pass every key you want to keep.
 
 ### Outstream video
 
@@ -462,10 +503,11 @@ an unlabelled pageview.
 - `EzoicErrorCode.consentRequired` = `5001`; `getEzoicErrorCode(error)` → `number | undefined`
 - `EzoicBannerAd.create({ adUnitIdentifier, size?, collapseOnNoFill?, refreshIntervalSeconds?, refreshMaxCount?, placement? })`,
   `EzoicOutstreamAd.create({ adUnitIdentifier, collapseOnNoFill?, placement? })`,
-  `EzoicNativeAd.create({ adUnitIdentifier, placement? })` → `Promise<view>`, each with
+  `EzoicNativeAd.create({ adUnitIdentifier, adStyle?, placement? })` → `Promise<view>`, each with
   - `.setListeners({ onLoad, onError, onImpression, onClick, onOpen, onClose, onSizeChange* })` (*banner / outstream only)
   - `.load()`, `.show()`, `.hide()`, `.setPlacement(placement)`, `.destroy()` → `Promise<void>`
   - `.attachTo(element, { autoHeight? })` → `() => void`, `.detach()`, `.getPlacement()`
+  - `.setStyle(adStyle)` → `Promise<void>` (native only)
 - `EzoicRewardedAd.load(adUnitIdentifier)` → `Promise<EzoicRewardedAd>`
   - `.setListeners({ onShown, onFailedToShow, onImpression, onClicked, onUserEarnedReward, onDismissed })`
   - `.show({ rewardName? })` → `Promise<EzoicReward | null>`, `.destroy()` → `Promise<void>`

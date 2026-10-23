@@ -1,4 +1,4 @@
-import type { EzoicAdPlacement, EzoicConfig, EzoicReward, EzoicRewardResult } from './definitions';
+import type { EzoicAdPlacement, EzoicConfig, EzoicNativeAdStyle, EzoicReward, EzoicRewardResult } from './definitions';
 
 export function normalizeConfig(config: EzoicConfig): EzoicConfig {
   if (!config?.domain) {
@@ -35,6 +35,43 @@ export function normalizeSize(size: string | undefined): string | undefined {
 export function normalizeRefreshOverride(value: number | null | undefined): number | undefined {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return undefined;
   return Math.min(Math.trunc(value), 2147483647);
+}
+
+const NATIVE_STYLE_COLOR_KEYS = [
+  'backgroundColor',
+  'headlineTextColor',
+  'advertiserTextColor',
+  'bodyTextColor',
+  'callToActionBackgroundColor',
+  'callToActionTextColor',
+  'adLabelTextColor',
+  'adLabelBackgroundColor',
+] as const;
+
+const NATIVE_STYLE_NUMBER_KEYS = [
+  'cornerRadius',
+  'padding',
+  'headlineTextSize',
+  'advertiserTextSize',
+  'bodyTextSize',
+  'callToActionTextSize',
+  'callToActionCornerRadius',
+  'mediaHeight',
+] as const;
+
+/** Keeps the known style keys with usable values (strings for colors and the label, finite numbers for sizes). */
+export function normalizeNativeAdStyle(style: EzoicNativeAdStyle): EzoicNativeAdStyle {
+  const out: Record<string, string | number> = {};
+  for (const key of NATIVE_STYLE_COLOR_KEYS) {
+    const value = style[key];
+    if (typeof value === 'string') out[key] = value;
+  }
+  for (const key of NATIVE_STYLE_NUMBER_KEYS) {
+    const value = style[key];
+    if (typeof value === 'number' && Number.isFinite(value)) out[key] = value;
+  }
+  if (typeof style.adLabelText === 'string') out.adLabelText = style.adLabelText;
+  return out as EzoicNativeAdStyle;
 }
 
 export function coerceAdUnitId(adUnitIdentifier: string | number): string {

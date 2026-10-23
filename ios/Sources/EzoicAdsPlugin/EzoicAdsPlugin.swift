@@ -36,6 +36,7 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
     CAPPluginMethod(name: "showAdView", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "hideAdView", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "setAdViewPlacement", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "setAdViewStyle", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "destroyAdView", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "loadRewardedAd", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "showRewardedAd", returnType: CAPPluginReturnPromise),
@@ -295,11 +296,13 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
     // Absent = nil: the native banner then follows the server.
     let refreshIntervalSeconds = call.getInt("refreshIntervalSeconds")
     let refreshMaxCount = call.getInt("refreshMaxCount")
+    let nativeStyle = EzoicNativeAdStyle(dictionary: call.getObject("adStyle"))
     onMain { [weak self] in
       guard let self = self else { return }
       do {
         try self.adViews.create(id: id, kind: kind, rawAdUnitId: adUnitIdentifier, sizes: sizes, collapseOnNoFill: collapseOnNoFill,
-                                refreshIntervalSeconds: refreshIntervalSeconds, refreshMaxCount: refreshMaxCount, placement: placement)
+                                refreshIntervalSeconds: refreshIntervalSeconds, refreshMaxCount: refreshMaxCount, placement: placement,
+                                nativeStyle: nativeStyle)
         call.resolve()
       } catch {
         call.rejectPlugin(error.localizedDescription)
@@ -328,6 +331,11 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
       return
     }
     withAdView(call) { try self.adViews.setPlacement(id: $0, placement: placement) }
+  }
+
+  @objc func setAdViewStyle(_ call: CAPPluginCall) {
+    let style = EzoicNativeAdStyle(dictionary: call.getObject("adStyle"))
+    withAdView(call) { try self.adViews.setNativeStyle(id: $0, style: style) }
   }
 
   @objc func destroyAdView(_ call: CAPPluginCall) {

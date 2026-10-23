@@ -302,4 +302,40 @@ describe('EzoicOutstreamAd / EzoicNativeAd', () => {
       placement: { position: 'top', height: 300 },
     });
   });
+
+  it('native sends a cleaned adStyle when given', async () => {
+    const ad = await EzoicNativeAd.create({
+      adUnitIdentifier: 9,
+      adStyle: {
+        backgroundColor: '#1E1E2E',
+        cornerRadius: 12,
+        mediaHeight: Number.NaN,
+        adLabelText: 'Sponsored',
+        // Unknown keys and wrong types are dropped before the bridge.
+        ...({ fontFamily: 'Comic Sans', padding: '8px' } as object),
+      },
+    });
+    expect(plugin.createAdView).toHaveBeenCalledWith({
+      id: ad.id,
+      kind: 'native',
+      adUnitIdentifier: '9',
+      adStyle: { backgroundColor: '#1E1E2E', cornerRadius: 12, adLabelText: 'Sponsored' },
+      placement: { position: 'bottom' },
+    });
+  });
+
+  it('native setStyle restyles the view', async () => {
+    const ad = await EzoicNativeAd.create({ adUnitIdentifier: 9 });
+    await ad.setStyle({ headlineTextColor: '#ffffff', bodyTextSize: 13 });
+    expect(plugin.setAdViewStyle).toHaveBeenCalledWith({
+      id: ad.id,
+      adStyle: { headlineTextColor: '#ffffff', bodyTextSize: 13 },
+    });
+  });
+
+  it('native setStyle rejects after destroy', async () => {
+    const ad = await EzoicNativeAd.create({ adUnitIdentifier: 9 });
+    await ad.destroy();
+    expect(() => ad.setStyle({})).toThrow();
+  });
 });

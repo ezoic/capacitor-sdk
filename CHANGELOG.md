@@ -4,6 +4,17 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.18.0
+
+Wraps Ezoic Ads SDK 1.18.0. Native ads are now drawn by the native SDKs' shared
+template (`EzoicNativeAdTemplateView`), so they look the same here as in Swift,
+Kotlin, React Native and Flutter apps and gain an "Ad" attribution badge. New
+`adStyle` option on `EzoicNativeAd.create` and a `setStyle(adStyle)` method
+restyle the template: background, corner radius, padding, text colors and
+sizes, call-to-action colors and radius, media height and the ad badge text
+and colors. See "Styling native ads" in the README. The native SDKs also report
+an outcome for every rewarded ad load.
+
 ## 1.17.0
 
 Wraps Ezoic Ads SDK 1.17.0. Native ads (`EzoicNativeAd`) now register their

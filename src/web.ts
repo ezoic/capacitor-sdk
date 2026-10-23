@@ -6,6 +6,7 @@ import type {
   EzoicAdsPlugin,
   EzoicConfig,
   EzoicConsentOutcomeRaw,
+  EzoicNativeAdStyle,
   EzoicRewardResult,
 } from './definitions';
 
@@ -96,6 +97,10 @@ export class EzoicAdsWeb extends WebPlugin implements EzoicAdsPlugin {
   }
 
   async setAdViewPlacement(_options: { id: string; placement: EzoicAdPlacement }): Promise<void> {
+    this.warnOnce();
+  }
+
+  async setAdViewStyle(_options: { id: string; adStyle: EzoicNativeAdStyle }): Promise<void> {
     this.warnOnce();
   }
 

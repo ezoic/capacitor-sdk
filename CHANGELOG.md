@@ -4,6 +4,13 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.19.1
+
+Wraps Ezoic Ads SDK 1.19.1. Android release builds made with Android Gradle
+Plugin 9 no longer crash at startup with "Failed to create an instance of
+androidx.work.impl.WorkDatabase". On iOS, consent set with `setGDPRConsent` /
+`setGPPConsent` now reaches Google Mobile Ads, IMA and Amazon.
+
 ## 1.19.0
 
 Wraps Ezoic Ads SDK 1.19.0, which sends COPPA to Google Mobile Ads, IMA and

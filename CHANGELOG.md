@@ -4,6 +4,18 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.20.0
+
+Wraps Ezoic Ads SDK 1.20.0 on iOS, which only updates dependencies (Prebid
+3.4.1, Amazon APS 5.6.6 from Amazon's Swift package, Google Mobile Ads 13). No
+plugin API changes. Android still wraps Ezoic Ads SDK 1.19.1.
+
+Swift Package Manager is now the recommended way to install the plugin on iOS;
+see "Installation" in the README for migrating a CocoaPods project. CocoaPods
+trunk becomes read-only on December 2, 2026, so CocoaPods installs stop
+receiving native iOS SDK updates after the last release published before then.
+The pod now accepts `EzoicAdsSDK` 1.19.1 or any later 1.x release.
+
 ## 1.19.1
 
 Wraps Ezoic Ads SDK 1.19.1. Android release builds made with Android Gradle

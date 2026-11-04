@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npm run verify:web
+
+  ios-spm:
+    runs-on: macos-26
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Select Xcode 26.6
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Build Swift package (iOS Simulator)
+        run: |
+          xcodebuild build \
+            -scheme EzoicCapacitorSdk \
+            -destination 'generic/platform=iOS Simulator' \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            -skipPackagePluginValidation \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Pack plugin
+        run: |
+          npm ci
+          npm run build
+          echo "TARBALL=$(npm pack --pack-destination "$RUNNER_TEMP" | tail -1)" >> "$GITHUB_ENV"
+
+      # A fresh Capacitor SPM app consuming the packed plugin, the way
+      # publishers install it from npm.
+      - name: Create Capacitor SPM app
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir -p spm-app/www
+          cd spm-app
+          echo '<!doctype html><html><body></body></html>' > www/index.html
+          echo '{"appId":"com.ezoic.spmtest","appName":"SpmTest","webDir":"www"}' > capacitor.config.json
+          npm init -y > /dev/null
+          npm install @capacitor/core@8 @capacitor/cli@8 @capacitor/ios@8 "$RUNNER_TEMP/$TARBALL"
+          npx cap add ios --packagemanager SPM
+          npx cap sync ios
+
+      - name: Build Capacitor SPM app (iOS Simulator)
+        working-directory: ${{ runner.temp }}/spm-app/ios/App
+        run: |
+          xcodebuild build \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            -skipPackagePluginValidation \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee "$RUNNER_TEMP/app-build.log"
+          grep -A12 'Resolved source packages' "$RUNNER_TEMP/app-build.log"

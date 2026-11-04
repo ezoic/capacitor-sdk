@@ -22,8 +22,9 @@ Pod::Spec.new do |s|
 
   s.dependency 'Capacitor'
   # Native Ezoic Ads SDK (vends the `EzoicAdsSDKBinary` module). Brings in
-  # PrebidMobile + Google-Mobile-Ads-SDK transitively.
-  s.dependency 'EzoicAdsSDK', '~> 1.19.1'
+  # PrebidMobile + Google-Mobile-Ads-SDK transitively. EzoicAdsSDK 1.20.0
+  # reaches CocoaPods trunk later than SPM, so 1.19.1 is still accepted.
+  s.dependency 'EzoicAdsSDK', '~> 1.19', '>= 1.19.1'
   # The native-ad template imports GoogleMobileAds directly (NativeAdView,
   # MediaView, NativeAd). Pin GMA 13 so the module is on the compile path.
   s.dependency 'Google-Mobile-Ads-SDK', '~> 13.0'

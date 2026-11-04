@@ -137,15 +137,9 @@ export interface EzoicBannerAdOptions {
   size?: string;
   /** Collapse the view (height 0) when a load fails and no ad is displayed. Default `true`. */
   collapseOnNoFill?: boolean;
-  /**
-   * Seconds between automatic refreshes. Omit (or `null`) to follow the Ezoic
-   * server setting; `0` turns refresh off; values below 30 are raised to 30.
-   */
+  /** @deprecated Ignored: Ezoic sets the banner refresh interval. */
   refreshIntervalSeconds?: number | null;
-  /**
-   * Maximum automatic refreshes per `load()`. Omit (or `null`) to follow the
-   * Ezoic server setting; `0` means no limit; values above 100 are capped at 100.
-   */
+  /** @deprecated Ignored: Ezoic sets the banner refresh limit. */
   refreshMaxCount?: number | null;
   /** Where to overlay the view. Default `{ position: 'bottom' }`. */
   placement?: EzoicAdPlacement;
@@ -351,8 +345,6 @@ export interface EzoicAdsPlugin {
     adUnitIdentifier: string;
     size?: string;
     collapseOnNoFill?: boolean;
-    refreshIntervalSeconds?: number;
-    refreshMaxCount?: number;
     adStyle?: EzoicNativeAdStyle;
     placement: EzoicAdPlacement;
   }): Promise<void>;

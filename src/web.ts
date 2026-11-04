@@ -78,8 +78,6 @@ export class EzoicAdsWeb extends WebPlugin implements EzoicAdsPlugin {
     adUnitIdentifier: string;
     size?: string;
     collapseOnNoFill?: boolean;
-    refreshIntervalSeconds?: number;
-    refreshMaxCount?: number;
     placement: EzoicAdPlacement;
   }): Promise<void> {
     this.warnOnce();

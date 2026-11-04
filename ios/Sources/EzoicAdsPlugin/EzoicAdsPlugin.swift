@@ -306,16 +306,12 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
       .map { $0.trimmingCharacters(in: .whitespaces) }
       .filter { !$0.isEmpty }
     let collapseOnNoFill = call.getBool("collapseOnNoFill") ?? true
-    // Absent = nil: the native banner then follows the server.
-    let refreshIntervalSeconds = call.getInt("refreshIntervalSeconds")
-    let refreshMaxCount = call.getInt("refreshMaxCount")
     let nativeStyle = EzoicNativeAdStyle(dictionary: call.getObject("adStyle"))
     onMain { [weak self] in
       guard let self = self else { return }
       do {
         try self.adViews.create(id: id, kind: kind, rawAdUnitId: adUnitIdentifier, sizes: sizes, collapseOnNoFill: collapseOnNoFill,
-                                refreshIntervalSeconds: refreshIntervalSeconds, refreshMaxCount: refreshMaxCount, placement: placement,
-                                nativeStyle: nativeStyle)
+                                placement: placement, nativeStyle: nativeStyle)
         call.resolve()
       } catch {
         call.rejectPlugin(error.localizedDescription)

@@ -4,11 +4,27 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
-## Unreleased
+## 1.21.0
+
+Wraps Ezoic Ads SDK 1.21.0 on iOS and Android.
 
 Banners refresh automatically every 30 seconds, or at the interval Ezoic sets
 for the placement. The `EzoicBannerAd.create` options `refreshIntervalSeconds`
 and `refreshMaxCount` are deprecated and ignored; remove them from your app.
+
+On Android, InMobi now joins Google Ad Manager auctions through GAM SDK
+Bidding; the native SDK bundles Google's InMobi adapter, so there is nothing to
+configure. Google Mobile Ads is updated to 25.5.0 and the plugin builds with
+Kotlin 2.2.21 by default. Apps that set their own Kotlin version need Kotlin 2.2
+or later: with Kotlin 2.1 the plugin fails to compile against Google Mobile Ads
+25.5.0.
+
+On iOS, with `debugEnabled`, `initialize` logs a warning when `Info.plist` has
+no `SKAdNetworkItems`, is missing Google's (`cstr6suwn9.skadnetwork`) or
+InMobi's (`wzmmz9fp6w.skadnetwork`) ID, or lists an ID with uppercase letters
+(Apple ignores those). Swift Package Manager installs get native iOS SDK 1.21.0;
+CocoaPods installs keep resolving `EzoicAdsSDK` from CocoaPods trunk (1.19.1
+today).
 
 ## 1.20.0
 

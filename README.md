@@ -12,7 +12,7 @@ and the `EzoicInstreamAd` controller. On the web every call is a safe no-op.
 ## Requirements
 
 - Capacitor 7 or 8.
-- iOS 15.0+ and Xcode 26.2+ (required by the native `EzoicAdsSDK` 1.18), Android `minSdk` 24+ and Kotlin 2.1+.
+- iOS 15.0+ and Xcode 26.2+ (required by the native `EzoicAdsSDK` 1.18), Android `minSdk` 24+ and Kotlin 2.2+.
 
 ## Installation
 
@@ -72,7 +72,10 @@ Add your Google Ad Manager application ID to
 ```
 
 The plugin is written in Kotlin and declares its own Kotlin Gradle plugin, so
-no changes to your app's Gradle files are needed.
+no changes to your app's Gradle files are needed. If your app sets its own
+Kotlin version (`kotlin_version` in the root `build.gradle`, or the Kotlin
+Gradle plugin on the root buildscript classpath), use Kotlin 2.2 or later: the
+plugin compiles against Google Mobile Ads 25.5.0, which Kotlin 2.1 can't read.
 
 ## Usage
 

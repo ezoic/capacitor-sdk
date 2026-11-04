@@ -52,9 +52,6 @@ internal sealed class Placement {
   }
 }
 
-/** Banner refresh overrides from JS; null fields follow the Ezoic server. */
-internal data class RefreshOverrides(val intervalSeconds: Int?, val maxCount: Int?)
-
 internal enum class AdViewKind(val wire: String, val defaultHeightDp: Int?) {
   BANNER("banner", null),
   NATIVE("native", 300),
@@ -93,7 +90,6 @@ internal class EzoicAdViewManager(
     val rawAdUnitId: String,
     val sizes: List<String>,
     var collapseOnNoFill: Boolean,
-    val refresh: RefreshOverrides,
     var placement: Placement,
     val host: FrameLayout,
   ) {
@@ -168,14 +164,13 @@ internal class EzoicAdViewManager(
     rawAdUnitId: String,
     sizes: List<String>,
     collapseOnNoFill: Boolean,
-    refresh: RefreshOverrides,
     placement: Placement,
     nativeStyle: EzoicNativeAdStyle = EzoicNativeAdStyle(),
   ) {
     require(!entries.containsKey(id)) { "An ad view with id $id already exists" }
     val layer = ensureOverlay() ?: throw IllegalStateException("No WebView to overlay ads on")
     val host = FrameLayout(context)
-    val entry = Entry(id, kind, rawAdUnitId.toIntOrNull() ?: 0, rawAdUnitId, sizes, collapseOnNoFill, refresh, placement, host)
+    val entry = Entry(id, kind, rawAdUnitId.toIntOrNull() ?: 0, rawAdUnitId, sizes, collapseOnNoFill, placement, host)
     entry.nativeStyle = nativeStyle
     entries[id] = entry
     layer.addView(host, layoutParamsFor(entry))
@@ -277,8 +272,6 @@ internal class EzoicAdViewManager(
   private fun loadBanner(entry: Entry) {
     val banner = EzoicBannerView(context, entry.adUnitId)
     banner.collapseOnNoFill = entry.collapseOnNoFill
-    banner.refreshIntervalSeconds = entry.refresh.intervalSeconds
-    banner.refreshMaxCount = entry.refresh.maxCount
     banner.listener = object : EzoicBannerViewListener {
       override fun onBannerLoaded(bannerView: EzoicBannerView) = emitEvent(entry, "loaded")
       override fun onBannerLoadFailed(bannerView: EzoicBannerView, error: EzoicError) =

@@ -261,15 +261,10 @@ class EzoicAdsPlugin : Plugin() {
       ?: emptyList()
     val sizes = rawSizes.map { it.trim() }.filter { it.isNotEmpty() }
     val collapseOnNoFill = call.optBoolean("collapseOnNoFill", true)
-    // Absent = null: the native banner then follows the server.
-    val refresh = RefreshOverrides(
-      intervalSeconds = call.data.optIntOrNull("refreshIntervalSeconds"),
-      maxCount = call.data.optIntOrNull("refreshMaxCount"),
-    )
     val nativeStyle = nativeStyleFrom(call.getObject("adStyle", null))
     runOnMain {
       try {
-        adViews.create(id, kind, adUnitIdentifier, sizes, collapseOnNoFill, refresh, placement, nativeStyle)
+        adViews.create(id, kind, adUnitIdentifier, sizes, collapseOnNoFill, placement, nativeStyle)
         call.resolve()
       } catch (e: Exception) {
         call.rejectPlugin(e.message ?: "Failed to create ad view")

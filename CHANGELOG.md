@@ -4,6 +4,12 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## Unreleased
+
+Banners refresh automatically every 30 seconds, or at the interval Ezoic sets
+for the placement. The `EzoicBannerAd.create` options `refreshIntervalSeconds`
+and `refreshMaxCount` are deprecated and ignored; remove them from your app.
+
 ## 1.20.0
 
 Wraps Ezoic Ads SDK 1.20.0 on iOS, which only updates dependencies (Prebid

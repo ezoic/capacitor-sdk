@@ -35,6 +35,14 @@ Add your Google Ad Manager application ID to `ios/App/App/Info.plist`:
 <string>ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy</string>
 ```
 
+Also add every SKAdNetwork ID in Ezoic's combined list,
+[docs.ezoic.com/skadnetworkids.xml](https://docs.ezoic.com/skadnetworkids.xml),
+to `SKAdNetworkItems` in the same `Info.plist`. Apple reads these only from the
+app's `Info.plist`, and buyers whose ID is missing (Amazon, InMobi, Magnite,
+PubMatic and other non-Google buyers) can't use SKAdNetwork attribution. See
+[SKAdNetwork](https://docs.ezoic.com/docs/mobileapps/capacitor/#skadnetwork)
+for a command that adds them.
+
 ### Android
 
 Add your Google Ad Manager application ID to

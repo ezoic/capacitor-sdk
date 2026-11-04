@@ -3,7 +3,7 @@
 Ezoic Ads SDK for Capacitor (Prebid + Google Ad Manager banner, native, interstitial, rewarded, outstream and instream video ads).
 
 A thin Capacitor plugin over the native Ezoic Ads SDKs for iOS
-(`EzoicAdsSDK`, via CocoaPods or Swift Package Manager) and Android
+(`EzoicAdsSDK`, via Swift Package Manager or CocoaPods) and Android
 (`com.ezoic.sdk:ezoic-ads-sdk`, via Maven Central). It exposes an imperative
 `EzoicAds` API, the `EzoicBannerAd`, `EzoicNativeAd` and `EzoicOutstreamAd`
 overlay views, the `EzoicRewardedAd` and `EzoicInterstitialAd` full-screen ads,
@@ -23,10 +23,27 @@ npx cap sync
 
 ### iOS
 
-The plugin's pod declares `static_framework = true`, so the native
-`EzoicAdsSDK` binary (and its `PrebidMobile` / `GoogleMobileAds` dependencies)
-link statically without changes to the `use_frameworks!` line Capacitor puts
-in your `Podfile`. `npx cap sync` runs `pod install` for you.
+Use Swift Package Manager (SPM). It is the default for new Capacitor 8 iOS
+projects (`npx cap add ios`, or `npx cap add ios --packagemanager SPM` on
+Capacitor 7), and `npx cap sync` adds the plugin's `Package.swift`, which pulls
+in the native `EzoicAdsSDK` from
+[ezoic-swift-sdk-dist](https://github.com/ezoic/ezoic-swift-sdk-dist).
+
+To move an existing CocoaPods project to SPM, run
+`npx cap spm-migration-assistant` in your project root and finish the manual
+Xcode steps in Capacitor's
+[Swift Package Manager guide](https://capacitorjs.com/docs/ios/spm#using-our-migration-tool).
+A project uses either SPM or CocoaPods for all its plugins, so every Capacitor
+plugin in it must support SPM before you migrate.
+
+CocoaPods still works, but CocoaPods trunk becomes read-only on December 2,
+2026: CocoaPods installs stay on the last native SDK release published before
+then and get no later native updates. With CocoaPods the native module is
+`EzoicAdsSDKBinary` (SPM: `EzoicAdsSDK`). The plugin's pod declares
+`static_framework = true`, so the native SDK (and its `PrebidMobile` /
+`GoogleMobileAds` dependencies) links statically without changes to the
+`use_frameworks!` line Capacitor puts in your `Podfile`. `npx cap sync` runs
+`pod install` for you.
 
 Add your Google Ad Manager application ID to `ios/App/App/Info.plist`:
 

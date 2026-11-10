@@ -1,0 +1,67 @@
+{
+  "name": "@ezoic/capacitor-cmp-sdk",
+  "version": "1.22.0",
+  "description": "Ezoic's built-in consent management platform (IAB TCF in GDPR regions, US-state privacy) for Capacitor apps of Ezoic publishers that don't use Ezoic ads.",
+  "main": "dist/plugin.cjs.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "unpkg": "dist/plugin.js",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/",
+    "ios/Sources",
+    "ios/Frameworks/*.xcframework/**",
+    "Package.swift",
+    "EzoicCapacitorCmpSdk.podspec",
+    "CHANGELOG.md"
+  ],
+  "author": "Ezoic Inc <support@ezoic.com> (https://www.ezoic.com)",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ezoic/capacitor-sdk.git",
+    "directory": "cmp"
+  },
+  "bugs": {
+    "url": "https://github.com/ezoic/capacitor-sdk/issues"
+  },
+  "homepage": "https://github.com/ezoic/capacitor-sdk/tree/master/cmp#readme",
+  "keywords": [
+    "capacitor",
+    "plugin",
+    "native",
+    "ios",
+    "android",
+    "ezoic",
+    "cmp",
+    "consent",
+    "gdpr",
+    "tcf",
+    "gpp"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "verify:ios": "xcodebuild -scheme EzoicCapacitorCmpSdk -destination generic/platform=iOS",
+    "verify:android": "cd android && ./gradlew clean build test && cd ..",
+    "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
+    "clean": "rimraf ./dist",
+    "fetch:ios": "node ../scripts/fetch-ios-sdk.js --dest ios/Frameworks --only EzoicCmpSDKBinary",
+    "prepublishOnly": "npm run build",
+    "prepack": "npm run fetch:ios"
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=7.0.0"
+  },
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  }
+}

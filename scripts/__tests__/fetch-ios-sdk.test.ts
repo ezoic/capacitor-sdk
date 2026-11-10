@@ -7,7 +7,6 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 const script = resolve(__dirname, '..', 'fetch-ios-sdk.js');

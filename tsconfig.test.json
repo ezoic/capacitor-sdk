@@ -10,5 +10,5 @@
     "types": ["vitest/globals"]
   },
   "files": [],
-  "include": ["src/**/*.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "cmp/src/**/*.ts", "scripts/**/*.ts", "vitest.config.ts"]
 }

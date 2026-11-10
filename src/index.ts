@@ -1,5 +1,5 @@
 import { consentFailure, parseConsentOutcome } from './consent';
-import type { EzoicConfig, EzoicConsentOutcome } from './definitions';
+import type { EzoicAppContent, EzoicConfig, EzoicConsentOutcome } from './definitions';
 import { getEzoicErrorCode, normalizeConfig } from './helpers';
 import { EzoicAdsNative } from './plugin';
 import './session';
@@ -10,6 +10,7 @@ export type {
   EzoicAdPlacement,
   EzoicAdSize,
   EzoicAdViewListeners,
+  EzoicAppContent,
   EzoicAttachOptions,
   EzoicBannerAdOptions,
   EzoicConfig,
@@ -122,9 +123,11 @@ export const EzoicAds = {
     return presentConsent(() => EzoicAdsNative.presentConsentIfRequired());
   },
   /**
-   * Re-opens the consent dialog with the user's stored choices. TCF requires
-   * a persistent "Privacy settings" entry point that calls this. Always
-   * resolves.
+   * The "Privacy settings" entry point. In a GDPR region it re-opens the TCF
+   * dialog with the user's stored choices (TCF requires a persistent entry
+   * point that calls this). In a covered US state it opens the US privacy
+   * settings: `decided` with `acceptAll` (not opted out) or `rejectAll`
+   * (opted out), or `dismissed`. `notRequired` elsewhere. Always resolves.
    */
   presentConsentSettings(): Promise<EzoicConsentOutcome> {
     return presentConsent(() => EzoicAdsNative.presentConsentSettings());
@@ -137,7 +140,30 @@ export const EzoicAds = {
   isConsentRequired(): Promise<boolean | null> {
     return EzoicAdsNative.isConsentRequired().then((r) => (typeof r?.required === 'boolean' ? r.required : null));
   },
-  /** Deletes the decision stored by the built-in CMP so the dialog shows again. */
+  /**
+   * `true` when the app should show a "Privacy choices" entry point that
+   * calls `presentConsentSettings`: in a GDPR region or a covered US state
+   * while the built-in CMP handles consent. `false` otherwise, `null` until
+   * the init request and the US-state configuration have loaded.
+   */
+  isPrivacyOptionsRequired(): Promise<boolean | null> {
+    return EzoicAdsNative.isPrivacyOptionsRequired().then((r) =>
+      typeof r?.required === 'boolean' ? r.required : null,
+    );
+  },
+  /**
+   * Describes the app's content to bidders (OpenRTB `app.content`) on every
+   * later auction, replacing any earlier value. Call with no argument (or
+   * both fields unset) to clear it. Safe to call before `initialize`.
+   */
+  setAppContent(content?: EzoicAppContent): Promise<void> {
+    return EzoicAdsNative.setAppContent({ language: content?.language ?? null, genre: content?.genre ?? null });
+  },
+  /**
+   * Deletes the decision stored by the built-in CMP so the dialog shows
+   * again. The US-state choice is forgotten too, and the US notice shows
+   * again on the next launch.
+   */
   resetConsent(): Promise<void> {
     return EzoicAdsNative.resetConsent();
   },

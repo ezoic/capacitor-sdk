@@ -20,7 +20,9 @@ export function createMockPlugin() {
     presentConsentIfRequired: { type: 'notRequired' },
     presentConsentSettings: { type: 'notRequired' },
     isConsentRequired: { required: null },
+    isPrivacyOptionsRequired: { required: null },
     resetConsent: undefined,
+    setAppContent: undefined,
     createAdView: undefined,
     loadAdView: undefined,
     showAdView: undefined,
@@ -53,7 +55,9 @@ export function createMockPlugin() {
       presentConsentIfRequired: ReturnType<typeof vi.fn>;
       presentConsentSettings: ReturnType<typeof vi.fn>;
       isConsentRequired: ReturnType<typeof vi.fn>;
+      isPrivacyOptionsRequired: ReturnType<typeof vi.fn>;
       resetConsent: ReturnType<typeof vi.fn>;
+      setAppContent: ReturnType<typeof vi.fn>;
       createAdView: ReturnType<typeof vi.fn>;
       loadAdView: ReturnType<typeof vi.fn>;
       showAdView: ReturnType<typeof vi.fn>;

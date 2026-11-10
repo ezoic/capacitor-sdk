@@ -13,6 +13,7 @@ export function normalizeConfig(config: EzoicConfig): EzoicConfig {
   if (config.autoTrackPageviews !== undefined) out.autoTrackPageviews = config.autoTrackPageviews;
   if (config.cmpEnabled !== undefined) out.cmpEnabled = config.cmpEnabled;
   if (config.autoPresentConsent !== undefined) out.autoPresentConsent = config.autoPresentConsent;
+  if (config.appPaid !== undefined) out.appPaid = config.appPaid;
   return out;
 }
 

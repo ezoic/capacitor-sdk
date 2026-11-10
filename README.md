@@ -9,6 +9,11 @@ A thin Capacitor plugin over the native Ezoic Ads SDKs for iOS
 overlay views, the `EzoicRewardedAd` and `EzoicInterstitialAd` full-screen ads,
 and the `EzoicInstreamAd` controller. On the web every call is a safe no-op.
 
+Apps that don't show Ezoic ads but want Ezoic's consent management (TCF in GDPR
+regions, US-state privacy) use
+[`@ezoic/capacitor-cmp-sdk`](cmp/README.md) instead. Use one package, not
+both: this one already includes the CMP.
+
 ## Requirements
 
 - Capacitor 7 or 8.
@@ -36,14 +41,16 @@ Xcode steps in Capacitor's
 A project uses either SPM or CocoaPods for all its plugins, so every Capacitor
 plugin in it must support SPM before you migrate.
 
-CocoaPods still works, but CocoaPods trunk becomes read-only on December 2,
-2026: CocoaPods installs stay on the last native SDK release published before
-then and get no later native updates. With CocoaPods the native module is
-`EzoicAdsSDKBinary` (SPM: `EzoicAdsSDK`). The plugin's pod declares
-`static_framework = true`, so the native SDK (and its `PrebidMobile` /
-`GoogleMobileAds` dependencies) links statically without changes to the
-`use_frameworks!` line Capacitor puts in your `Podfile`. `npx cap sync` runs
-`pod install` for you.
+CocoaPods works too, and gets the same native SDK version as SPM. The native
+SDK is no longer published to CocoaPods trunk, so the plugin's pod vendors the
+native `EzoicAdsSDKBinary` and `EzoicCmpSDKBinary` XCFrameworks, which ship in
+the npm package. It also declares the pods they need: `PrebidMobile`,
+`Google-Mobile-Ads-SDK` and `AmazonPublisherServicesSDK`. With CocoaPods the
+native module is `EzoicAdsSDKBinary` (SPM: `EzoicAdsSDK`). The pod declares
+`static_framework = true`, so the native SDK links statically without changes
+to the `use_frameworks!` line Capacitor puts in your `Podfile`.
+`npx cap sync` runs `pod install` for you. If your `Podfile` lists the
+`EzoicAdsSDK` pod itself (it never had to), remove it.
 
 Add your Google Ad Manager application ID to `ios/App/App/Info.plist`:
 
@@ -87,7 +94,7 @@ import { EzoicAds, EzoicBannerAd } from '@ezoic/capacitor-sdk';
 await EzoicAds.initialize({ domain: 'example.com' });
 
 // Optional privacy signals.
-await EzoicAds.setGPPConsent('<GPP string>', '7');
+await EzoicAds.setGPPConsent('<GPP string>', '8');
 await EzoicAds.setSubjectToCOPPA(false);
 
 // Label the current screen in reporting (see "Pageview labelling").
@@ -322,16 +329,37 @@ resolves. `contentUrl` and `revenueUsd` are optional.
 | `debugEnabled` | `false` | Verbose native logging. |
 | `testMode` | `false` | Ezoic $0.00 test ads on debug builds / simulators. Disable before release. |
 | `autoTrackPageviews` | `true` | Record a pageview automatically on native screen changes. See [Pageview labelling](#pageview-labelling). |
-| `cmpEnabled` | `true` | Enable the built-in TCF CMP. Set `false` if you run your own CMP. |
+| `cmpEnabled` | `true` | Enable the built-in CMP (TCF in GDPR regions, the US-state notice and settings). Set `false` if you run your own CMP. |
 | `autoPresentConsent` | `true` | Present the consent dialog (if required) right after `initialize` resolves. |
+| `appPaid` | not sent | Whether your app is a paid app. Sent to bidders as OpenRTB `app.paid`. |
+
+### App content
+
+`EzoicAds.setAppContent({ language, genre })` describes your app's content to
+bidders (OpenRTB `app.content`) on every later ad request:
+
+```ts
+await EzoicAds.setAppContent({ language: 'en', genre: 'News' });
+await EzoicAds.setAppContent(); // clears it
+```
+
+`language` is an ISO-639-1 two-letter code. Other values are dropped, with a
+warning in the native log. `genre` is free text. A missing or `null` field is
+not sent, and calling with neither field clears the content. It replaces any
+earlier value and can be called before `initialize`.
 
 ## Privacy & consent
 
-### Built-in CMP (GDPR / TCF 2.4)
+### Built-in CMP (GDPR / TCF 2.4 and US states)
 
 The native SDK includes an IAB TCF 2.4 consent management platform (CMP ID
-299). It is on by default (`cmpEnabled: true`) and only does anything for users
-in GDPR regions; elsewhere nothing is shown and ads load as before.
+299). It is on by default (`cmpEnabled: true`). It does something only for:
+
+- users in GDPR regions, who get the TCF dialog;
+- users in the US states with consumer privacy laws, who get a notice and a
+  "Do Not Sell" choice (see [US states](#us-states)).
+
+Elsewhere nothing is shown and ads load as before.
 
 > **If your app already runs another CMP (UMP, OneTrust, …) you _must_ set
 > `cmpEnabled: false`.** See [Using your own CMP](#using-your-own-cmp).
@@ -390,30 +418,62 @@ The promise always resolves (never rejects) with an `EzoicConsentOutcome`:
 | `decided` | The user chose `decision` (`acceptAll`, `rejectAll` or `custom`); the choice is saved |
 | `dismissed` | The dialog closed without a choice; ads stay gated for this session |
 | `alreadyPresenting` | A consent dialog is already on screen or being prepared |
-| `failed` | The dialog couldn't be shown. `code`/`message` come from the native error. `code: -1` with `message: 'No foreground Activity'` (on both platforms) is plugin-side: there was no foreground Activity / view controller, native was not called and ads stay gated, so call `presentConsentIfRequired()` again once a screen is showing |
+| `failed` | The dialog couldn't be shown. `code`/`message` come from the native error: `1001` not initialized, `2001` network, `4001` render, `5002` invalid consent. `code: -1` with `message: 'No foreground Activity'` (on both platforms) is plugin-side: there was no foreground Activity / view controller, native was not called and ads stay gated, so call `presentConsentIfRequired()` again once a screen is showing |
 
 - **`isConsentRequired()`** resolves `true` whenever GDPR applies and the
   built-in CMP is in charge (including after the user has decided), `false`
   otherwise, and `null` until the init request completes or when the server
   sent no consent information.
+- **`isPrivacyOptionsRequired()`** resolves `true` when your app should show a
+  "Privacy choices" entry point (see below): in a GDPR region or a covered US
+  state while the built-in CMP handles consent. It resolves `false` otherwise,
+  and `null` until the init request and the US-state configuration have
+  loaded.
 - **`resetConsent()`** deletes the stored decision so the dialog shows again
-  (ads re-gate until the user decides).
+  (ads re-gate until the user decides). The US-state choice is forgotten too,
+  and the US notice shows again on the next launch.
+
+### US states
+
+In the US states with consumer privacy laws the CMP writes the IAB GPP keys
+(`IABGPP_*`) for the user's state, which ad SDKs and bidders read. It shows a
+non-blocking notice card at the bottom of the screen once per launch until the
+user chooses **Consent** or **Do Not Sell My Information**.
+
+- Ads never wait for the notice; US law is opt-out.
+- The user is not opted out until they choose otherwise.
+- After an opt-out, Google ad requests are sent with restricted data
+  processing.
+- There is nothing to call: the native SDK shows the notice by itself.
+- `presentConsentIfRequired()` keeps its GDPR meaning and resolves
+  `notRequired` in US states.
+- The CMP stays out of the way when another CMP already wrote `IABGPP_*` keys,
+  when you call `setGPPConsent`, or with `autoReadConsent: false`.
 
 ### Privacy settings button (required)
 
 TCF policy requires users to be able to reopen the dialog and change or
-withdraw consent at any time. Wire `presentConsentSettings()` to a menu item or
-button that is always reachable:
+withdraw consent at any time, and US users must be able to opt out. Wire a
+"Privacy choices" button to `presentConsentSettings()`. You may hide it when
+`isPrivacyOptionsRequired()` resolves `false`. Don't hide it on `null`, which
+means "not known yet":
 
 ```ts
-document.getElementById('privacy-settings')!.addEventListener('click', () => {
+const button = document.getElementById('privacy-settings')!;
+button.hidden = (await EzoicAds.isPrivacyOptionsRequired()) === false;
+button.addEventListener('click', () => {
   EzoicAds.presentConsentSettings();
 });
 ```
 
-It reopens the dialog with the user's stored choices in GDPR regions and
-resolves `notRequired` elsewhere, with `cmpEnabled: false`, or when another CMP
-is present.
+`presentConsentSettings()` depends on the user's region:
+
+- **GDPR region:** reopens the TCF dialog with the user's stored choices.
+- **Covered US state:** opens the US privacy settings. It resolves `decided`
+  with `acceptAll` (not opted out) or `rejectAll` (opted out), or `dismissed`
+  when closed without saving.
+- **Elsewhere,** with `cmpEnabled: false`, or when another CMP is present: it
+  resolves `notRequired`.
 
 ### Using your own CMP
 
@@ -518,7 +578,9 @@ an unlabelled pageview.
 - `EzoicAds.presentConsentIfRequired()` → `Promise<EzoicConsentOutcome>`
 - `EzoicAds.presentConsentSettings()` → `Promise<EzoicConsentOutcome>`
 - `EzoicAds.isConsentRequired()` → `Promise<boolean | null>`
+- `EzoicAds.isPrivacyOptionsRequired()` → `Promise<boolean | null>`
 - `EzoicAds.resetConsent()` → `Promise<void>`
+- `EzoicAds.setAppContent({ language?, genre? }?)` → `Promise<void>`
 - `EzoicErrorCode.consentRequired` = `5001`; `getEzoicErrorCode(error)` → `number | undefined`
 - `EzoicBannerAd.create({ adUnitIdentifier, size?, collapseOnNoFill?, placement? })`,
   `EzoicOutstreamAd.create({ adUnitIdentifier, collapseOnNoFill?, placement? })`,

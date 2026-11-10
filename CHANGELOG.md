@@ -4,6 +4,36 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.22.0 (unreleased)
+
+Wraps Ezoic Ads SDK 1.22.0 on iOS and Android.
+
+- **US-state privacy.** In the US states with consumer privacy laws, the
+  built-in CMP now writes the IAB GPP keys for the user's state. It shows a
+  non-blocking notice once per launch until the user chooses, and offers a "Do
+  Not Sell My Information" choice. Ads never wait for it. There is nothing to
+  call, and `cmpEnabled: false` turns it off along with the TCF dialog.
+- **`presentConsentSettings()` is region-aware.** In GDPR regions it opens the
+  TCF dialog as before. In covered US states it opens the US privacy settings:
+  `decided` with `acceptAll` (not opted out) or `rejectAll` (opted out), or
+  `dismissed`. Existing "Privacy settings" buttons work for US users without
+  changes. The outcome types are unchanged.
+- **New `EzoicAds.isPrivacyOptionsRequired()`.** It is `true` when your app
+  should show a "Privacy choices" entry point, `null` while unknown.
+- **New `EzoicAds.setAppContent({ language, genre })` and the `appPaid` init
+  option.** They describe your app to bidders (OpenRTB `app.content`,
+  `app.paid`).
+- A `failed` consent outcome keeps its `{ type: 'failed', code, message }`
+  shape and native codes (1001, 2001, 4001, 5002), although the native
+  error type changed in 1.22.0.
+- **CocoaPods.** The native SDK is no longer published to CocoaPods trunk. The
+  pod now vendors the native `EzoicAdsSDKBinary` and `EzoicCmpSDKBinary`
+  XCFrameworks, which ship in the npm package, so CocoaPods installs get native
+  1.22.0 like SPM installs. If your `Podfile` lists the `EzoicAdsSDK` pod
+  itself, remove it.
+- **New package `@ezoic/capacitor-cmp-sdk`.** The same CMP, for Ezoic
+  publishers whose app doesn't use Ezoic ads. Use one package, not both.
+
 ## 1.21.0
 
 Wraps Ezoic Ads SDK 1.21.0 on iOS and Android.

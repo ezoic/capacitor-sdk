@@ -97,7 +97,7 @@ export const EzoicAds = {
   setGDPRConsent(applies: boolean, consentString?: string): Promise<void> {
     return EzoicAdsNative.setGDPRConsent({ applies, consentString });
   },
-  /** Sets the GPP string and applicable section ids (a comma-separated string, e.g. `'7'`). */
+  /** Sets the GPP string and applicable section ids (a comma-separated string, e.g. `'8'`). */
   setGPPConsent(gppString?: string, sectionIds?: string): Promise<void> {
     return EzoicAdsNative.setGPPConsent({ gppString, sectionIds });
   },

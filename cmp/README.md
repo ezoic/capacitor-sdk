@@ -88,15 +88,14 @@ The promises always resolve, never reject, with an `EzoicConsentOutcome`.
 
 ### Privacy choices entry point
 
-Show a "Privacy choices" button while `isPrivacyOptionsRequired()` is `true`.
-That is the case in a GDPR region or a covered US state while the CMP handles
-consent. The button calls `presentConsentSettings()`:
+Give users a "Privacy choices" button that calls `presentConsentSettings()`.
+`isPrivacyOptionsRequired()` is `true` in a GDPR region or a covered US state
+while the CMP handles consent. You may hide the button when it resolves
+`false`, but don't hide it on `null`, which means "not known yet":
 
 ```ts
-if (await EzoicCmp.isPrivacyOptionsRequired()) {
-  privacyButton.hidden = false;
-  privacyButton.onclick = () => EzoicCmp.presentConsentSettings();
-}
+privacyButton.hidden = (await EzoicCmp.isPrivacyOptionsRequired()) === false;
+privacyButton.onclick = () => EzoicCmp.presentConsentSettings();
 ```
 
 In a GDPR region it reopens the TCF dialog with the stored choices. In a

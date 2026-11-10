@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ezoic Capacitor example</title>
+    <style>
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        padding: env(safe-area-inset-top) 16px 16px;
+      }
+      button {
+        display: block;
+        margin: 8px 0;
+        padding: 10px;
+        width: 100%;
+      }
+      pre {
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Ezoic example</h1>
+    <p id="mode"></p>
+    <button id="init">Initialize</button>
+    <button id="privacy">Privacy choices</button>
+    <button id="status">Refresh status</button>
+    <button id="reset">Reset consent</button>
+    <pre id="log"></pre>
+    <script>
+      // The page talks to the raw plugins, so it needs no bundler and works
+      // with either package installed (or both). With both, EzoicAds owns
+      // the CMP and the consent calls go through it.
+      const domain = 'example.com';
+      const plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
+      const ads = window.Capacitor && window.Capacitor.isPluginAvailable('EzoicAds') ? plugins.EzoicAds : null;
+      const cmp = window.Capacitor && window.Capacitor.isPluginAvailable('EzoicCmp') ? plugins.EzoicCmp : null;
+      const consent = ads || cmp;
+      const log = (label, value) => {
+        document.getElementById('log').textContent += `${label}: ${JSON.stringify(value)}\n`;
+      };
+      document.getElementById('mode').textContent =
+        'Plugins: ' + [ads && 'EzoicAds', cmp && 'EzoicCmp'].filter(Boolean).join(' + ');
+
+      async function refresh() {
+        if (!consent) return;
+        const required = await consent.isConsentRequired();
+        const privacy = await consent.isPrivacyOptionsRequired();
+        log('isConsentRequired', required.required);
+        log('isPrivacyOptionsRequired', privacy.required);
+        document.getElementById('privacy').hidden = privacy.required === false;
+      }
+
+      document.getElementById('init').onclick = async () => {
+        try {
+          if (ads) {
+            await ads.initialize({ domain, testMode: true, debugEnabled: true, appPaid: false });
+            await ads.setAppContent({ language: 'en', genre: 'News' });
+          }
+          if (cmp) await cmp.initialize({ domain, debugEnabled: true });
+          log('initialize', 'ok');
+        } catch (e) {
+          log('initialize failed', e.message);
+        }
+        await refresh();
+      };
+      document.getElementById('privacy').onclick = async () => {
+        log('presentConsentSettings', await consent.presentConsentSettings());
+        await refresh();
+      };
+      document.getElementById('status').onclick = refresh;
+      document.getElementById('reset').onclick = async () => {
+        await consent.resetConsent();
+        log('resetConsent', 'ok');
+      };
+    </script>
+  </body>
+</html>

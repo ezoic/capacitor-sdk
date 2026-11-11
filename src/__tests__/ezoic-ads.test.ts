@@ -29,6 +29,11 @@ describe('EzoicAds.initialize', () => {
     expect(plugin.initialize).toHaveBeenCalledWith({ domain: 'example.com', testMode: true, cmpEnabled: false });
   });
 
+  it('forwards appPaid, including false', async () => {
+    await EzoicAds.initialize({ domain: 'example.com', appPaid: false });
+    expect(plugin.initialize).toHaveBeenCalledWith({ domain: 'example.com', appPaid: false });
+  });
+
   it('drops undefined optional fields', async () => {
     await EzoicAds.initialize({ domain: 'example.com', debugEnabled: undefined });
     expect(plugin.initialize).toHaveBeenCalledWith({ domain: 'example.com' });
@@ -104,6 +109,25 @@ describe('privacy setters', () => {
   });
 });
 
+describe('EzoicAds.setAppContent', () => {
+  it('forwards language and genre', async () => {
+    await EzoicAds.setAppContent({ language: 'en', genre: 'News' });
+    expect(plugin.setAppContent).toHaveBeenCalledWith({ language: 'en', genre: 'News' });
+  });
+
+  it('clears with no argument', async () => {
+    await EzoicAds.setAppContent();
+    expect(plugin.setAppContent).toHaveBeenCalledWith({ language: null, genre: null });
+  });
+
+  it('clears with an empty object or nulls', async () => {
+    await EzoicAds.setAppContent({});
+    expect(plugin.setAppContent).toHaveBeenLastCalledWith({ language: null, genre: null });
+    await EzoicAds.setAppContent({ language: null, genre: 'News' });
+    expect(plugin.setAppContent).toHaveBeenLastCalledWith({ language: null, genre: 'News' });
+  });
+});
+
 describe('EzoicAds.trackPageview', () => {
   it('passes the screen label and unwraps the result', async () => {
     await expect(EzoicAds.trackPageview('Home')).resolves.toBe(true);
@@ -167,6 +191,17 @@ describe('consent', () => {
     await expect(EzoicAds.isConsentRequired()).resolves.toBeNull();
     plugin.isConsentRequired.mockResolvedValue(undefined);
     await expect(EzoicAds.isConsentRequired()).resolves.toBeNull();
+  });
+
+  it('isPrivacyOptionsRequired unwraps booleans and nulls', async () => {
+    plugin.isPrivacyOptionsRequired.mockResolvedValue({ required: true });
+    await expect(EzoicAds.isPrivacyOptionsRequired()).resolves.toBe(true);
+    plugin.isPrivacyOptionsRequired.mockResolvedValue({ required: false });
+    await expect(EzoicAds.isPrivacyOptionsRequired()).resolves.toBe(false);
+    plugin.isPrivacyOptionsRequired.mockResolvedValue({ required: null });
+    await expect(EzoicAds.isPrivacyOptionsRequired()).resolves.toBeNull();
+    plugin.isPrivacyOptionsRequired.mockResolvedValue(undefined);
+    await expect(EzoicAds.isPrivacyOptionsRequired()).resolves.toBeNull();
   });
 
   it('resetConsent forwards', async () => {

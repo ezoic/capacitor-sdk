@@ -32,6 +32,10 @@ internal fun PluginCall.rejectPlugin(message: String) {
 internal fun PluginCall.optBoolean(key: String, default: Boolean): Boolean =
   if (data.has(key) && !data.isNull(key)) data.getBoolean(key) else default
 
+/** Reads an optional boolean (missing/null → null). */
+internal fun PluginCall.optBooleanOrNull(key: String): Boolean? =
+  if (data.has(key) && !data.isNull(key)) data.getBoolean(key) else null
+
 /** Reads an optional non-empty string. */
 internal fun PluginCall.optString(key: String): String? =
   getString(key)?.takeIf { it.isNotEmpty() }

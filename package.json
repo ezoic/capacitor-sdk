@@ -106,11 +106,11 @@
       "frameworks": {
         "EzoicAdsSDKBinary": {
           "asset": "EzoicAdsSDK",
-          "sha256": "TODO-RELEASE"
+          "sha256": "dd375c1989ace9aa960502a860644177646399084a852d9617b9bd6c2ad0e52a"
         },
         "EzoicCmpSDKBinary": {
           "asset": "EzoicCmpSDK",
-          "sha256": "TODO-RELEASE"
+          "sha256": "eec460f1eff7d82a46f412bf3fe63a5ed7ab90871d12375570927cba91ee0e40"
         }
       },
       "podDependencies": {

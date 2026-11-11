@@ -12,7 +12,9 @@ and the `EzoicInstreamAd` controller. On the web every call is a safe no-op.
 Apps that don't show Ezoic ads but want Ezoic's consent management (TCF in GDPR
 regions, US-state privacy) use
 [`@ezoic/capacitor-cmp-sdk`](cmp/README.md) instead. Use one package, not
-both: this one already includes the CMP.
+both: this one already includes the CMP. If an app does install both, keep them
+at the same version: the iOS pod pins the CMP package exactly, so a mismatch
+fails `pod install`.
 
 ## Requirements
 
@@ -93,8 +95,9 @@ import { EzoicAds, EzoicBannerAd } from '@ezoic/capacitor-sdk';
 // dialog is presented automatically once this resolves (see "Privacy & consent").
 await EzoicAds.initialize({ domain: 'example.com' });
 
-// Optional privacy signals.
-await EzoicAds.setGPPConsent('<GPP string>', '8');
+// Optional privacy signals. The GPP section id depends on the user's state
+// ('8' is California); pass the string and ids your CMP produced.
+await EzoicAds.setGPPConsent('DBABBg~BVoAAACA.QA', '8');
 await EzoicAds.setSubjectToCOPPA(false);
 
 // Label the current screen in reporting (see "Pageview labelling").
@@ -491,8 +494,12 @@ await EzoicAds.initialize({ domain: 'example.com', cmpEnabled: false });
 lasts for the current process only, so **call `setGDPRConsent` before
 `initialize` on every launch** (or set `cmpEnabled: false`). Otherwise each cold
 start begins with the built-in CMP in charge until your call lands: it can gate
-ad loads, show its dialog and write `IABTCF_*` keys. The SDK doesn't write your
-consent string to `IABTCF_*` keys for other SDKs, so your own CMP must do that.
+ad loads, show its dialog and write `IABTCF_*` keys.
+
+`setGDPRConsent` writes `IABTCF_gdprApplies` and `IABTCF_TCString`, and
+`setGPPConsent` writes `IABGPP_HDR_GppString` and `IABGPP_GppSID`, so other
+SDKs that read those keys see your values. The other IAB keys, such as the
+per-purpose consents, are left to your CMP.
 
 ```ts
 await EzoicAds.setGDPRConsent(true, '<IAB TCF consent string>');

@@ -8,7 +8,16 @@ name: Publish to npm
 #
 # Prerequisites (one-time, for EACH of the two packages):
 #   1. The package must already exist on npm (npm has no "pending publisher").
-#      Do a single manual bootstrap publish to create it, then never again.
+#      Create it with one manual bootstrap publish of a THROWAWAY version,
+#      never the real release version, then deprecate it:
+#        cd cmp   # (or the repo root for @ezoic/capacitor-sdk)
+#        npm version 0.0.1-bootstrap.0 --no-git-tag-version --ignore-scripts
+#        npm publish --access public --tag bootstrap --ignore-scripts
+#        npm deprecate @ezoic/capacitor-cmp-sdk@0.0.1-bootstrap.0 "Bootstrap placeholder; do not use."
+#        git checkout package.json
+#      (npm may stage the publish for 2FA approval on npmjs.com first.) The
+#      preflight step below fails the run before anything is published while
+#      either package is missing.
 #   2. On npmjs.com -> the package -> Settings -> Trusted Publisher, add a
 #      GitHub Actions publisher with EXACTLY:
 #        Organization or user: ezoic
@@ -78,25 +87,39 @@ jobs:
           node scripts/fetch-ios-sdk.js --dest cmp/ios/Frameworks --only EzoicCmpSDKBinary
           node scripts/fetch-ios-sdk.js --dest cmp/ios/Frameworks --only EzoicCmpSDKBinary --check
 
+      # Trusted publishing can't create a package, so a missing one would fail
+      # its publish after the other package was already out. Check both first.
+      - name: Preflight (both packages exist on npm)
+        run: |
+          missing=0
+          for name in @ezoic/capacitor-cmp-sdk @ezoic/capacitor-sdk; do
+            if [ -z "$(npm view "$name" name 2>/dev/null)" ]; then
+              echo "::error::$name does not exist on npm yet. Do the one-time bootstrap publish of a throwaway version and add its Trusted Publisher first (see the header of this workflow); nothing was published."
+              missing=1
+            fi
+          done
+          exit $missing
+
       # `prepublishOnly` rebuilds dist/ during publish. Provenance is generated
       # automatically for OIDC publishes from a public repo; the flag makes the
       # intent explicit. A version already on npm (a re-run after a partial
-      # publish, or a bootstrap publish) is skipped.
-      - name: Publish @ezoic/capacitor-sdk
-        run: |
-          VERSION="$(node -p "require('./package.json').version")"
-          if [ -n "$(npm view "@ezoic/capacitor-sdk@$VERSION" version 2>/dev/null)" ]; then
-            echo "@ezoic/capacitor-sdk@$VERSION is already published; skipping"
-          else
-            npm publish --provenance --access public
-          fi
-
+      # publish) is skipped. The CMP goes first: the ads pod depends on it at
+      # the same version when an app installs both.
       - name: Publish @ezoic/capacitor-cmp-sdk
         working-directory: cmp
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           if [ -n "$(npm view "@ezoic/capacitor-cmp-sdk@$VERSION" version 2>/dev/null)" ]; then
             echo "@ezoic/capacitor-cmp-sdk@$VERSION is already published; skipping"
+          else
+            npm publish --provenance --access public
+          fi
+
+      - name: Publish @ezoic/capacitor-sdk
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ -n "$(npm view "@ezoic/capacitor-sdk@$VERSION" version 2>/dev/null)" ]; then
+            echo "@ezoic/capacitor-sdk@$VERSION is already published; skipping"
           else
             npm publish --provenance --access public
           fi

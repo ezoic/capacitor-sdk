@@ -15,7 +15,9 @@ the same Ezoic publisher settings.
 > CMP: apps that show Ezoic ads use `EzoicAds`'s consent methods and don't need
 > this package. If an app installs both, `EzoicAds` takes the CMP over, both
 > packages reach the same CMP and the same stored decision, and each native
-> framework is linked once.
+> framework is linked once. Keep both packages at the same version: the iOS pod
+> of `@ezoic/capacitor-sdk` pins this package exactly, so a mismatch fails
+> `pod install`.
 
 The CMP works only for domains registered with Ezoic. For any other domain it
 stays off: every present resolves `failed` with code `1001`, the requirement

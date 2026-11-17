@@ -4,6 +4,11 @@ All notable changes to `@ezoic/capacitor-cmp-sdk` are documented here. The
 plugin version tracks the native Ezoic CMP SDKs it wraps (Swift and Kotlin),
 and `@ezoic/capacitor-sdk`, in lockstep.
 
+## 1.22.3
+
+Wraps the standalone Ezoic CMP, Android 1.22.3 and iOS 1.23.2. No changes to
+the CMP; the version follows `@ezoic/capacitor-sdk`.
+
 ## 1.22.2
 
 First release. Wraps the standalone Ezoic CMP (`EzoicCmp`), Android 1.22.2 and

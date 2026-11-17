@@ -4,9 +4,17 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
-## 1.22.0 (unreleased)
+## 1.22.2
 
-Wraps Ezoic Ads SDK 1.22.0 on iOS and Android.
+The first release since 1.21.0; Capacitor had no 1.22.0 or 1.22.1. Wraps Ezoic
+Ads SDK 1.22.2 on Android and 1.23.1 on iOS (the native SDKs are now versioned
+separately). Swift Package Manager builds resolve iOS 1.23.1 or a later 1.x.
+
+- **Banner sizes.** A banner loaded without a size gets the largest standard
+  size that fits the banner's width, not the screen's. Before, a banner
+  narrower than a tablet or landscape screen could get a 728x90 it could not
+  show in full. On Android, a banner won by a header bidding partner keeps its
+  size instead of shrinking to about 1x1.
 
 - **US-state privacy.** In the US states with consumer privacy laws, the
   built-in CMP now writes the IAB GPP keys for the user's state. It shows a
@@ -29,10 +37,12 @@ Wraps Ezoic Ads SDK 1.22.0 on iOS and Android.
 - **CocoaPods.** The native SDK is no longer published to CocoaPods trunk. The
   pod now vendors the native `EzoicAdsSDKBinary` and `EzoicCmpSDKBinary`
   XCFrameworks, which ship in the npm package, so CocoaPods installs get native
-  1.22.0 like SPM installs. If your `Podfile` lists the `EzoicAdsSDK` pod
+  the same native SDK as SPM installs. If your `Podfile` lists the `EzoicAdsSDK` pod
   itself, remove it.
 - **New package `@ezoic/capacitor-cmp-sdk`.** The same CMP, for Ezoic
-  publishers whose app doesn't use Ezoic ads. Use one package, not both.
+  publishers whose app doesn't use Ezoic ads. Use one package, not both. It
+  follows separately; it is not on npm yet. Apps using `@ezoic/capacitor-sdk`
+  don't need it.
 
 ## 1.21.0
 

@@ -1,6 +1,6 @@
 {
   "name": "@ezoic/capacitor-sdk",
-  "version": "1.22.0",
+  "version": "1.22.2",
   "description": "Ezoic Ads SDK for Capacitor (Prebid + Google Ad Manager banner, native, interstitial, rewarded, outstream and instream video ads).",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -102,15 +102,15 @@
   },
   "ezoic": {
     "iosSdk": {
-      "version": "1.22.0",
+      "version": "1.23.1",
       "frameworks": {
         "EzoicAdsSDKBinary": {
           "asset": "EzoicAdsSDK",
-          "sha256": "dd375c1989ace9aa960502a860644177646399084a852d9617b9bd6c2ad0e52a"
+          "sha256": "6330e576f76af16998f646c96190567b7cc0b17cf15cd76c6bbc1b9abba67505"
         },
         "EzoicCmpSDKBinary": {
           "asset": "EzoicCmpSDK",
-          "sha256": "eec460f1eff7d82a46f412bf3fe63a5ed7ab90871d12375570927cba91ee0e40"
+          "sha256": "c5beac97eec838ab4c39d9c02c0352fd4473a1d6ddc2ac18bbdd5fc01b236d6d"
         }
       },
       "podDependencies": {

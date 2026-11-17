@@ -4,10 +4,10 @@ All notable changes to `@ezoic/capacitor-cmp-sdk` are documented here. The
 plugin version tracks the native Ezoic CMP SDKs it wraps (Swift and Kotlin),
 and `@ezoic/capacitor-sdk`, in lockstep.
 
-## 1.22.0 (unreleased)
+## 1.22.2
 
-First release. Wraps the standalone Ezoic CMP 1.22.0 (`EzoicCmp`): Android
-`com.ezoic.sdk:ezoic-cmp-sdk`, iOS `EzoicCmpSDK` (Swift Package Manager) or the
+First release. Wraps the standalone Ezoic CMP (`EzoicCmp`), Android 1.22.2 and
+iOS 1.23.1: Android `com.ezoic.sdk:ezoic-cmp-sdk`, iOS `EzoicCmpSDK` (Swift Package Manager) or the
 vendored `EzoicCmpSDKBinary` XCFramework (CocoaPods).
 
 - `EzoicCmp.initialize`, `presentConsentIfRequired`, `presentConsentSettings`,

@@ -15,9 +15,10 @@ name: Publish to npm
 #        npm publish --access public --tag bootstrap --ignore-scripts
 #        npm deprecate @ezoic/capacitor-cmp-sdk@0.0.1-bootstrap.0 "Bootstrap placeholder; do not use."
 #        git checkout package.json
-#      (npm may stage the publish for 2FA approval on npmjs.com first.) The
-#      preflight step below fails the run before anything is published while
-#      either package is missing.
+#      (npm may stage the publish for 2FA approval on npmjs.com first.) While
+#      the CMP package is missing, the preflight step below publishes the ads
+#      package alone; a missing ads package fails the run before anything is
+#      published.
 #   2. On npmjs.com -> the package -> Settings -> Trusted Publisher, add a
 #      GitHub Actions publisher with EXACTLY:
 #        Organization or user: ezoic
@@ -89,16 +90,25 @@ jobs:
 
       # Trusted publishing can't create a package, so a missing one would fail
       # its publish after the other package was already out. Check both first.
-      - name: Preflight (both packages exist on npm)
+      # npm can't attach a Trusted Publisher to a package that doesn't exist
+      # yet. The ads package must exist. The CMP package is optional: the ads
+      # package doesn't depend on it, so while it is missing this run publishes
+      # the ads package alone and warns. Once the CMP package is bootstrapped,
+      # re-run this workflow on the same tag (`gh workflow run publish.yml
+      # --ref vX.Y.Z`); the ads package is then skipped as already published.
+      - name: Preflight (packages exist on npm)
+        id: preflight
         run: |
-          missing=0
-          for name in @ezoic/capacitor-cmp-sdk @ezoic/capacitor-sdk; do
-            if [ -z "$(npm view "$name" name 2>/dev/null)" ]; then
-              echo "::error::$name does not exist on npm yet. Do the one-time bootstrap publish of a throwaway version and add its Trusted Publisher first (see the header of this workflow); nothing was published."
-              missing=1
-            fi
-          done
-          exit $missing
+          if [ -z "$(npm view @ezoic/capacitor-sdk name 2>/dev/null)" ]; then
+            echo "::error::@ezoic/capacitor-sdk does not exist on npm; nothing was published (see the header of this workflow)."
+            exit 1
+          fi
+          if [ -n "$(npm view @ezoic/capacitor-cmp-sdk name 2>/dev/null)" ]; then
+            echo "cmp=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::@ezoic/capacitor-cmp-sdk does not exist on npm yet, so this run publishes @ezoic/capacitor-sdk only. Do its one-time bootstrap publish and add its Trusted Publisher (see the header of this workflow), then re-run this workflow on the same tag."
+            echo "cmp=false" >> "$GITHUB_OUTPUT"
+          fi
 
       # `prepublishOnly` rebuilds dist/ during publish. Provenance is generated
       # automatically for OIDC publishes from a public repo; the flag makes the
@@ -106,6 +116,7 @@ jobs:
       # publish) is skipped. The CMP goes first: the ads pod depends on it at
       # the same version when an app installs both.
       - name: Publish @ezoic/capacitor-cmp-sdk
+        if: steps.preflight.outputs.cmp == 'true'
         working-directory: cmp
         run: |
           VERSION="$(node -p "require('./package.json').version")"

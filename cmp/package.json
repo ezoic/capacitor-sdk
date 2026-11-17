@@ -1,6 +1,6 @@
 {
   "name": "@ezoic/capacitor-cmp-sdk",
-  "version": "1.22.3",
+  "version": "1.24.0",
   "description": "Ezoic's built-in consent management platform (IAB TCF in GDPR regions, US-state privacy) for Capacitor apps of Ezoic publishers that don't use Ezoic ads.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -49,7 +49,7 @@
     "verify:android": "cd android && ./gradlew clean build test && cd ..",
     "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
     "clean": "rimraf ./dist",
-    "fetch:ios": "node ../scripts/fetch-ios-sdk.js --dest ios/Frameworks --only EzoicCmpSDKBinary",
+    "fetch:ios": "node ../scripts/fetch-ios-sdk.js --dest ios/Frameworks --only EzoicConsentCoreBinary,EzoicCmpSDKBinary",
     "prepublishOnly": "npm run build",
     "prepack": "npm run fetch:ios"
   },

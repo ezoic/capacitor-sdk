@@ -45,8 +45,8 @@ plugin in it must support SPM before you migrate.
 
 CocoaPods works too, and gets the same native SDK version as SPM. The native
 SDK is no longer published to CocoaPods trunk, so the plugin's pod vendors the
-native `EzoicAdsSDKBinary` and `EzoicCmpSDKBinary` XCFrameworks, which ship in
-the npm package. It also declares the pods they need: `PrebidMobile`,
+native `EzoicAdsSDKBinary`, `EzoicConsentCoreBinary` and `EzoicCmpSDKBinary`
+XCFrameworks, which ship in the npm package. It also declares the pods they need: `PrebidMobile`,
 `Google-Mobile-Ads-SDK` and `AmazonPublisherServicesSDK`. With CocoaPods the
 native module is `EzoicAdsSDKBinary` (SPM: `EzoicAdsSDK`). The pod declares
 `static_framework = true`, so the native SDK links statically without changes
@@ -421,7 +421,7 @@ The promise always resolves (never rejects) with an `EzoicConsentOutcome`:
 
 | `type` | When |
 |---|---|
-| `notRequired` | GDPR doesn't apply, the built-in CMP is disabled, another CMP owns consent, or consent is managed by the app (`setGDPRConsent`, or `autoReadConsent: false`) |
+| `notRequired` | GDPR doesn't apply, the built-in CMP is disabled or removed, another CMP owns consent, or consent is managed by the app (`setGDPRConsent`, or `autoReadConsent: false`) |
 | `alreadyDecided` | A still-valid decision is stored; no dialog shown |
 | `decided` | The user chose `decision` (`acceptAll`, `rejectAll` or `custom`); the choice is saved |
 | `dismissed` | The dialog closed without a choice; ads stay gated for this session |
@@ -491,6 +491,34 @@ way automatically if it finds `IABTCF_CmpSdkID` set to another CMP's ID.
 
 ```ts
 await EzoicAds.initialize({ domain: 'example.com', cmpEnabled: false });
+```
+
+You can also take the built-in CMP's code out of the app:
+
+- **Android:** exclude the `ezoic-cmp-sdk` artifact in
+  `android/app/build.gradle` (the app module, not the root `build.gradle`).
+  Keep `cmpEnabled: false` as well.
+
+  ```groovy
+  configurations.all {
+      exclude group: 'com.ezoic.sdk', module: 'ezoic-cmp-sdk'
+  }
+  ```
+
+  The SDK then behaves exactly as with `cmpEnabled: false`. If you leave
+  `cmpEnabled` on, `initialize` logs a warning (with `debugEnabled: true`) that
+  the CMP isn't included. No ProGuard / R8 rules are needed. Don't add the
+  exclude to an app that also uses `@ezoic/capacitor-cmp-sdk`, which needs the
+  CMP.
+- **iOS:** the CMP stays in the app. The plugin's `Package.swift` (and its
+  pod) always link it, so set `cmpEnabled: false` and it stays off.
+
+`EzoicAds.isBuiltInCmpIncluded()` resolves `false` when the CMP was removed and
+`true` otherwise (whether or not it is enabled), so you can tell "removed" from
+"disabled":
+
+```ts
+const included = await EzoicAds.isBuiltInCmpIncluded(); // false after the Android exclude
 ```
 
 ### Manual consent
@@ -592,6 +620,7 @@ an unlabelled pageview.
 - `EzoicAds.isConsentRequired()` → `Promise<boolean | null>`
 - `EzoicAds.isPrivacyOptionsRequired()` → `Promise<boolean | null>`
 - `EzoicAds.resetConsent()` → `Promise<void>`
+- `EzoicAds.isBuiltInCmpIncluded()` → `Promise<boolean>` (see [Using your own CMP](#using-your-own-cmp))
 - `EzoicAds.setAppContent({ language?, genre? }?)` → `Promise<void>`
 - `EzoicErrorCode.consentRequired` = `5001`; `getEzoicErrorCode(error)` → `number | undefined`
 - `EzoicBannerAd.create({ adUnitIdentifier, size?, collapseOnNoFill?, placement? })`,

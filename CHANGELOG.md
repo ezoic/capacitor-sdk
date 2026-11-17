@@ -4,6 +4,33 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.24.0
+
+Wraps Ezoic Ads SDK 1.24.0 on Android and iOS: all Ezoic SDKs now share one
+version. Swift Package Manager builds resolve iOS 1.24.0 or a later 1.x.
+
+- **Removable built-in CMP (Android).** Apps that use another CMP can take the
+  Ezoic CMP's code out of the Android app with a Gradle exclude in
+  `android/app/build.gradle`, next to `cmpEnabled: false`:
+
+  ```groovy
+  configurations.all {
+      exclude group: 'com.ezoic.sdk', module: 'ezoic-cmp-sdk'
+  }
+  ```
+
+  Without the CMP the SDK behaves exactly as with `cmpEnabled: false`. On iOS
+  the CMP stays in the app; set `cmpEnabled: false` and it stays off. See
+  [Using your own CMP](README.md#using-your-own-cmp).
+- **New `EzoicAds.isBuiltInCmpIncluded()`** → `Promise<boolean>`: `false` when
+  the app removed the CMP, `true` otherwise (whether or not it is enabled).
+- The native consent types moved into a new consent-core library
+  (`com.ezoic.sdk:ezoic-consent-core` on Android, transitive;
+  `EzoicConsentCoreBinary` on iOS). With CocoaPods the pod now vendors that
+  XCFramework too, and its Swift references the CMP so the static linker keeps
+  it. Consent outcomes and their `failed` codes (1001, 2001, 4001, 5002) are
+  unchanged.
+
 ## 1.22.3
 
 Wraps Ezoic Ads SDK 1.22.3 on Android and 1.23.2 on iOS. Swift Package Manager

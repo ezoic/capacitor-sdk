@@ -243,6 +243,15 @@ class EzoicAdsPlugin : Plugin() {
   }
 
   /**
+   * Whether the built-in CMP (`com.ezoic.sdk:ezoic-cmp-sdk`) is in the app:
+   * `false` when the app excluded it from its dependencies.
+   */
+  @PluginMethod
+  fun isBuiltInCmpIncluded(call: PluginCall) {
+    call.resolve(JSObject().put("included", EzoicAds.instance.isBuiltInCmpIncluded))
+  }
+
+  /**
    * Presents from the foreground Activity on the UI thread and always resolves
    * with an outcome object; with no Activity it resolves `failed(-1)`.
    */

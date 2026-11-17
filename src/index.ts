@@ -167,4 +167,15 @@ export const EzoicAds = {
   resetConsent(): Promise<void> {
     return EzoicAdsNative.resetConsent();
   },
+  /**
+   * Whether the built-in Ezoic CMP is in the app. `true` by default. `false`
+   * on Android when the app excluded `com.ezoic.sdk:ezoic-cmp-sdk` in
+   * `android/app/build.gradle` (see "Using your own CMP" in the README); the
+   * SDK then behaves as with `cmpEnabled: false`. On iOS the CMP is always
+   * included (turn it off with `cmpEnabled: false`). `false` on the web.
+   * Tells "removed" apart from "disabled".
+   */
+  isBuiltInCmpIncluded(): Promise<boolean> {
+    return EzoicAdsNative.isBuiltInCmpIncluded().then((r) => r?.included === true);
+  },
 };

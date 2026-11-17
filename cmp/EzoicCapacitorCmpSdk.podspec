@@ -1,9 +1,11 @@
 require 'json'
 
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
-framework = 'ios/Frameworks/EzoicCmpSDKBinary.xcframework'
+frameworks = %w[EzoicConsentCoreBinary EzoicCmpSDKBinary].map { |name| "ios/Frameworks/#{name}.xcframework" }
 
-unless File.exist?(File.join(__dir__, framework, 'Info.plist'))
+frameworks.each do |framework|
+  next if File.exist?(File.join(__dir__, framework, 'Info.plist'))
+
   raise Pod::Informative, "EzoicCapacitorCmpSdk: #{framework} is missing. " \
     'It ships in the npm package; in a git checkout run `npm run fetch:ios` in ' \
     "#{__dir__} to download the Ezoic CMP SDK #{package['version']}"
@@ -24,10 +26,11 @@ Pod::Spec.new do |s|
 
   s.dependency 'Capacitor'
 
-  # The native CMP (module `EzoicCmpSDKBinary`), the `-cocoapods` XCFramework
+  # The native CMP (module `EzoicCmpSDKBinary`) and the consent core it imports
+  # and re-exports (`EzoicConsentCoreBinary`), the `-cocoapods` XCFrameworks
   # from the ezoic-swift-sdk-dist GitHub release, bundled in the npm package by
   # scripts/fetch-ios-sdk.js. No other pods. When the app also installs
-  # @ezoic/capacitor-sdk, that pod depends on this one for the framework
-  # instead of vendoring it again.
-  s.vendored_frameworks = framework
+  # @ezoic/capacitor-sdk, that pod depends on this one for both frameworks
+  # instead of vendoring them again.
+  s.vendored_frameworks = frameworks
 end

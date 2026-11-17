@@ -5,10 +5,11 @@ ios_sdk = package['ezoic']['iosSdk']
 frameworks_dir = 'ios/Frameworks'
 cmp_pod = 'EzoicCapacitorCmpSdk'
 
-# An app that also installs @ezoic/capacitor-cmp-sdk gets EzoicCmpSDKBinary
-# from that pod: vendoring it here as well would link it twice (CocoaPods
-# fails with "frameworks with conflicting names"). Capacitor writes every
-# plugin into the app's Podfile, so the Podfile says whether it is there.
+# An app that also installs @ezoic/capacitor-cmp-sdk gets EzoicConsentCoreBinary
+# and EzoicCmpSDKBinary from that pod: vendoring them here as well would link
+# them twice (CocoaPods fails with "frameworks with conflicting names").
+# Capacitor writes every plugin into the app's Podfile, so the Podfile says
+# whether it is there.
 cmp_pod_in_podfile = begin
   podfile = Pod::Config.instance.podfile
   !podfile.nil? && podfile.dependencies.any? { |dependency| dependency.root_name == cmp_pod }
@@ -17,7 +18,7 @@ rescue StandardError
 end
 
 vendored = ['EzoicAdsSDKBinary']
-vendored << 'EzoicCmpSDKBinary' unless cmp_pod_in_podfile
+vendored += %w[EzoicConsentCoreBinary EzoicCmpSDKBinary] unless cmp_pod_in_podfile
 vendored.each do |name|
   next if File.exist?(File.join(__dir__, frameworks_dir, "#{name}.xcframework", 'Info.plist'))
 
@@ -49,9 +50,11 @@ Pod::Spec.new do |s|
   # Native Ezoic iOS SDK, the `-cocoapods` XCFrameworks from the
   # ezoic-swift-sdk-dist GitHub release, bundled in the npm package by
   # scripts/fetch-ios-sdk.js (CocoaPods trunk is frozen). Modules
-  # `EzoicAdsSDKBinary` and `EzoicCmpSDKBinary`, which the ads binary
-  # re-exports. Static archives that link the host's PrebidMobile /
-  # GoogleMobileAds / DTBiOSSDK rather than embedding them.
+  # `EzoicAdsSDKBinary`, `EzoicConsentCoreBinary` (the consent types, which
+  # the ads binary imports and re-exports) and `EzoicCmpSDKBinary` (the
+  # built-in CMP, which the ads binary finds at runtime; the plugin's Swift
+  # references it so it is linked). Static archives that link the host's
+  # PrebidMobile / GoogleMobileAds / DTBiOSSDK rather than embedding them.
   s.vendored_frameworks = vendored.map { |name| "#{frameworks_dir}/#{name}.xcframework" }
   s.dependency cmp_pod, s.version.to_s if cmp_pod_in_podfile
 

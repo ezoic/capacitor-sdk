@@ -42,6 +42,13 @@
       };
       document.getElementById('mode').textContent =
         'Plugins: ' + [ads && 'EzoicAds', cmp && 'EzoicCmp'].filter(Boolean).join(' + ');
+      if (ads) {
+        // false only when the app removed the built-in CMP (Android Gradle exclude).
+        ads.isBuiltInCmpIncluded().then((r) => {
+          log('isBuiltInCmpIncluded', r.included);
+          console.log(`[EzoicExample] isBuiltInCmpIncluded=${r.included}`);
+        });
+      }
 
       async function refresh() {
         if (!consent) return;

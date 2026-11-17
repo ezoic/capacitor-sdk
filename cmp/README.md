@@ -38,8 +38,9 @@ npx cap sync
 - **iOS, Swift Package Manager:** `npx cap sync` adds the plugin's
   `Package.swift`, which pulls in the `EzoicCmpSDK` product of
   [ezoic-swift-sdk-dist](https://github.com/ezoic/ezoic-swift-sdk-dist).
-- **iOS, CocoaPods:** the pod vendors the `EzoicCmpSDKBinary` XCFramework,
-  which ships in the npm package. It needs no other pods.
+- **iOS, CocoaPods:** the pod vendors the `EzoicCmpSDKBinary` and
+  `EzoicConsentCoreBinary` XCFrameworks, which ship in the npm package. It
+  needs no other pods.
 - **Android:** the plugin depends on `com.ezoic.sdk:ezoic-cmp-sdk` from Maven
   Central. The Capacitor template's `google()` and `mavenCentral()`
   repositories are enough.

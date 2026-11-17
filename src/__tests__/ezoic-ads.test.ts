@@ -204,6 +204,14 @@ describe('consent', () => {
     await expect(EzoicAds.isPrivacyOptionsRequired()).resolves.toBeNull();
   });
 
+  it('isBuiltInCmpIncluded unwraps the native result', async () => {
+    await expect(EzoicAds.isBuiltInCmpIncluded()).resolves.toBe(true);
+    plugin.isBuiltInCmpIncluded.mockResolvedValue({ included: false });
+    await expect(EzoicAds.isBuiltInCmpIncluded()).resolves.toBe(false);
+    plugin.isBuiltInCmpIncluded.mockResolvedValue(undefined);
+    await expect(EzoicAds.isBuiltInCmpIncluded()).resolves.toBe(false);
+  });
+
   it('resetConsent forwards', async () => {
     await EzoicAds.resetConsent();
     expect(plugin.resetConsent).toHaveBeenCalled();

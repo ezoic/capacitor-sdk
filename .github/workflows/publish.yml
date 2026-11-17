@@ -85,8 +85,8 @@ jobs:
         run: |
           node scripts/fetch-ios-sdk.js
           node scripts/fetch-ios-sdk.js --check
-          node scripts/fetch-ios-sdk.js --dest cmp/ios/Frameworks --only EzoicCmpSDKBinary
-          node scripts/fetch-ios-sdk.js --dest cmp/ios/Frameworks --only EzoicCmpSDKBinary --check
+          node scripts/fetch-ios-sdk.js --dest cmp/ios/Frameworks --only EzoicConsentCoreBinary,EzoicCmpSDKBinary
+          node scripts/fetch-ios-sdk.js --dest cmp/ios/Frameworks --only EzoicConsentCoreBinary,EzoicCmpSDKBinary --check
 
       # Trusted publishing can't create a package, so a missing one would fail
       # its publish after the other package was already out. Check both first.

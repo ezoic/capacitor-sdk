@@ -360,6 +360,7 @@ export interface EzoicAdsPlugin {
   isConsentRequired(): Promise<{ required: boolean | null }>;
   isPrivacyOptionsRequired(): Promise<{ required: boolean | null }>;
   resetConsent(): Promise<void>;
+  isBuiltInCmpIncluded(): Promise<{ included: boolean }>;
   setAppContent(options: { language: string | null; genre: string | null }): Promise<void>;
 
   createAdView(options: {

@@ -287,6 +287,11 @@ const ad = await EzoicInterstitialAd.load('123456');
 await ad.show(); // resolves on dismiss, rejects if it could not be presented
 ```
 
+If an interstitial that Google renders is still in front 20 seconds after it
+was shown, the SDK closes it and `show()` resolves as usual; time spent on a
+store page, in a browser or in the background doesn't count, and rewarded ads
+are never closed this way.
+
 ### Instream video
 
 `EzoicInstreamAd` is a view-less controller for instream (pre/mid/post-roll)

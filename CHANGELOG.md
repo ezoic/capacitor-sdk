@@ -4,6 +4,18 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.22.3
+
+Wraps Ezoic Ads SDK 1.22.3 on Android and 1.23.2 on iOS. Swift Package Manager
+builds resolve iOS 1.23.2 or a later 1.x.
+
+- **Interstitials.** An interstitial that Google renders is closed by the SDK
+  once it has been in front for 20 seconds without being dismissed. `onDismissed`
+  fires and `show()` resolves as usual. Only the time the ad is in front
+  counts: a store page, a browser or the app being in the background pauses
+  it. Rewarded ads are never closed this way. There is nothing to change in
+  your app.
+
 ## 1.22.2
 
 The first release since 1.21.0; Capacitor had no 1.22.0 or 1.22.1. Wraps Ezoic

@@ -28,9 +28,9 @@ jobs:
 
       - run: npm run verify:web
 
-  # Before the native 1.22.0 release exists, the native jobs fail to resolve
-  # it, and the pinned iOS framework sha256s are TODO-RELEASE placeholders
-  # (fill them with `node scripts/fetch-ios-sdk.js --pin`).
+  # Before a native release exists, the native jobs fail to resolve it, and
+  # the pinned iOS framework sha256s are TODO-RELEASE placeholders (fill them
+  # with `node scripts/fetch-ios-sdk.js --pin`).
   ios-spm:
     runs-on: macos-26
     defaults:
@@ -58,13 +58,19 @@ jobs:
 
   # A fresh Capacitor app consuming the packed plugin(s), the way publishers
   # install them from npm: each package alone, then both together (which must
-  # link one copy of each native library).
+  # link one copy of each native library). Every default build must contain
+  # the built-in CMP (on iOS: the provider class the ads SDK looks up by
+  # name). `ads-without-cmp` applies the documented Gradle exclude and must
+  # contain no CMP class (Android only: the iOS plugin always links the CMP).
   example-app:
     strategy:
       fail-fast: false
       matrix:
         platform: [ios-spm, ios-pods, android]
         case: [ads, cmp, both]
+        include:
+          - platform: android
+            case: ads-without-cmp
     runs-on: ${{ startsWith(matrix.platform, 'ios') && 'macos-26' || 'ubuntu-latest' }}
     defaults:
       run:
@@ -91,7 +97,7 @@ jobs:
 
       - run: npm ci
 
-      # Checks both pinned sha256s; packing vendors the frameworks.
+      # Checks the pinned sha256s; packing vendors the frameworks.
       - name: Fetch iOS frameworks
         run: |
           node scripts/fetch-ios-sdk.js

@@ -4,6 +4,18 @@ All notable changes to `@ezoic/capacitor-cmp-sdk` are documented here. The
 plugin version tracks the native Ezoic CMP SDKs it wraps (Swift and Kotlin),
 and `@ezoic/capacitor-sdk`, in lockstep.
 
+## 1.24.0
+
+Wraps the standalone Ezoic CMP 1.24.0 on Android and iOS (one version for
+every Ezoic SDK from now on). No changes to the CMP's API or behaviour; the
+version follows `@ezoic/capacitor-sdk`.
+
+- The consent types (`ConsentOutcome` and friends) moved into a new native
+  consent-core library that the CMP depends on: Android
+  `com.ezoic.sdk:ezoic-consent-core` comes in transitively; the iOS pod now
+  vendors `EzoicConsentCoreBinary` next to `EzoicCmpSDKBinary`. Nothing to
+  change in your app.
+
 ## 1.22.3
 
 Wraps the standalone Ezoic CMP, Android 1.22.3 and iOS 1.23.2. No changes to

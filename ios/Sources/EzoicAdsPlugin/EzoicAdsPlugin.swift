@@ -5,6 +5,18 @@ import Capacitor
 import EzoicAdsSDK
 #else
 import EzoicAdsSDKBinary
+@_spi(EzoicInternal) import EzoicCmpSDKBinary
+#endif
+
+#if !canImport(EzoicAdsSDK)
+// CocoaPods only. The ads SDK finds the built-in CMP at runtime by its
+// Objective-C class name and never references it, so the static linker would
+// leave the CMP out of the app. This reference to the provider class makes it
+// link the CMP (from this pod, or from EzoicCapacitorCmpSdk when the app has
+// both plugins). With Swift Package Manager the dist package's `EzoicAdsSDK`
+// product does the same. Public so the optimizer keeps it.
+/// Not API: referenced only to link the built-in CMP.
+public let _ezoicCapacitorBuiltInCmpProviderClass: AnyClass = BuiltInCmpProvider.self
 #endif
 
 /// Capacitor bridge for the Ezoic Ads SDK.
@@ -33,6 +45,7 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
     CAPPluginMethod(name: "isConsentRequired", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "isPrivacyOptionsRequired", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "resetConsent", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "isBuiltInCmpIncluded", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "setAppContent", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "createAdView", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "loadAdView", returnType: CAPPluginReturnPromise),
@@ -257,6 +270,13 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
     }
   }
 
+  /// Whether the built-in CMP is linked into the app. On iOS this plugin always
+  /// links it (turn it off with `cmpEnabled: false`), so `false` here means
+  /// the link reference above (CocoaPods) or the SPM product broke.
+  @objc func isBuiltInCmpIncluded(_ call: CAPPluginCall) {
+    onMain { call.resolve(["included": EzoicAds.isBuiltInCmpIncluded]) }
+  }
+
   /// Presents from the top-most view controller on main and always resolves
   /// with an outcome object; with no view controller it resolves `failed(-1)`.
   private func presentConsent(
@@ -296,7 +316,8 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
       }
       return ["type": "decided", "decision": name]
     case .failed(let error):
-      // `EzoicError` (through `EzoicAds`) and `CmpError` both carry the code.
+      // Both `EzoicError` and the CMP's `CmpError` conform to `EzoicErrorCode`
+      // (EzoicConsentCore, re-exported by the ads module) and carry the code.
       let code = (error as? EzoicErrorCode)?.code ?? -1
       let message = error.localizedDescription.isEmpty ? "Unknown error" : error.localizedDescription
       return consentFailure(code: code, message: message)

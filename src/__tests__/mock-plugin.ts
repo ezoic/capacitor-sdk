@@ -22,6 +22,7 @@ export function createMockPlugin() {
     isConsentRequired: { required: null },
     isPrivacyOptionsRequired: { required: null },
     resetConsent: undefined,
+    isBuiltInCmpIncluded: { included: true },
     setAppContent: undefined,
     createAdView: undefined,
     loadAdView: undefined,
@@ -57,6 +58,7 @@ export function createMockPlugin() {
       isConsentRequired: ReturnType<typeof vi.fn>;
       isPrivacyOptionsRequired: ReturnType<typeof vi.fn>;
       resetConsent: ReturnType<typeof vi.fn>;
+      isBuiltInCmpIncluded: ReturnType<typeof vi.fn>;
       setAppContent: ReturnType<typeof vi.fn>;
       createAdView: ReturnType<typeof vi.fn>;
       loadAdView: ReturnType<typeof vi.fn>;

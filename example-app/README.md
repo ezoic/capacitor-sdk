@@ -13,11 +13,15 @@ this app, adds the platform and builds it:
 scripts/build-example-app.sh ads android    # @ezoic/capacitor-sdk alone
 scripts/build-example-app.sh cmp ios-spm    # @ezoic/capacitor-cmp-sdk alone
 scripts/build-example-app.sh both ios-pods  # both together
+scripts/build-example-app.sh ads-without-cmp android  # CMP removed (Gradle exclude)
 ```
 
-The build output must define the native CMP exactly once (and the ads SDK once
-unless the case is `cmp`); the script fails otherwise. CI runs every case on
-every platform.
+The build output must define the native consent types and the built-in CMP
+exactly once (and the ads SDK once unless the case is `cmp`); the script fails
+otherwise. `ads-without-cmp` (Android only) adds the README's Gradle exclude
+and must contain no CMP class; it also builds a minified (R8) release. CI runs every case on every platform. The page
+logs `isBuiltInCmpIncluded` (`[EzoicExample] isBuiltInCmpIncluded=…` in the
+native console).
 
 To run an app after a build, open the generated project from the work
 directory the script prints: `app/android` in Android Studio, or

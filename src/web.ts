@@ -77,6 +77,11 @@ export class EzoicAdsWeb extends WebPlugin implements EzoicAdsPlugin {
     this.warnOnce();
   }
 
+  async isBuiltInCmpIncluded(): Promise<{ included: boolean }> {
+    this.warnOnce();
+    return { included: false };
+  }
+
   async setAppContent(_options: { language: string | null; genre: string | null }): Promise<void> {
     this.warnOnce();
   }

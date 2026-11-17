@@ -20,10 +20,27 @@ export interface EzoicConfig {
   testMode?: boolean;
   /** Record a pageview automatically on native screen changes. Default `true`. */
   autoTrackPageviews?: boolean;
-  /** Enable the built-in TCF CMP for GDPR regions. Default `true`; set `false` if you run your own CMP. */
+  /**
+   * Enable the built-in CMP: the TCF dialog in GDPR regions, and the notice and
+   * "Do Not Sell" choice in covered US states. Default `true`; set `false` if
+   * you run your own CMP.
+   */
   cmpEnabled?: boolean;
   /** Present the consent dialog (if required) right after `initialize` succeeds. Default `true`. */
   autoPresentConsent?: boolean;
+  /** Whether the app is paid, sent to bidders as OpenRTB `app.paid`. Default: not sent. */
+  appPaid?: boolean;
+}
+
+/**
+ * The app's content, sent to bidders as OpenRTB `app.content`. Missing or
+ * `null` fields are omitted; with neither set, the content is cleared.
+ */
+export interface EzoicAppContent {
+  /** ISO-639-1 two-letter code, e.g. `'en'`. Other values are dropped (logged natively). */
+  language?: string | null;
+  /** Free text, e.g. `'News'`. */
+  genre?: string | null;
 }
 
 /** Which button the user closed the consent dialog with. */
@@ -36,13 +53,17 @@ export type EzoicConsentDecision = 'acceptAll' | 'rejectAll' | 'custom';
  *   CMP owns consent, or consent is managed by the app (`setGDPRConsent`, or
  *   `autoReadConsent: false`).
  * - `alreadyDecided`: a still-valid decision is stored; no dialog was shown.
- * - `decided`: the user made a choice, which has been saved.
+ * - `decided`: the user made a choice, which has been saved. From the US
+ *   privacy settings (`presentConsentSettings` in a covered US state),
+ *   `acceptAll` means not opted out and `rejectAll` means opted out of the
+ *   sale or sharing of personal information.
  * - `dismissed`: the dialog closed without a choice; ads stay gated for this
  *   session.
  * - `alreadyPresenting`: a consent dialog is already on screen or being
  *   prepared.
- * - `failed`: the dialog could not be shown. `code` is the native
- *   `EzoicError` code, or `-1` (`'No foreground Activity'`) when the plugin
+ * - `failed`: the dialog could not be shown. `code` is the native error
+ *   code (1001 not initialized, 2001 network, 4001 render, 5002 invalid
+ *   consent), or `-1` (`'No foreground Activity'`) when the plugin
  *   had no foreground Activity / view controller: native was not called, ads
  *   stay gated, and you should call again once a screen is showing.
  */
@@ -337,7 +358,9 @@ export interface EzoicAdsPlugin {
   presentConsentIfRequired(): Promise<EzoicConsentOutcomeRaw>;
   presentConsentSettings(): Promise<EzoicConsentOutcomeRaw>;
   isConsentRequired(): Promise<{ required: boolean | null }>;
+  isPrivacyOptionsRequired(): Promise<{ required: boolean | null }>;
   resetConsent(): Promise<void>;
+  setAppContent(options: { language: string | null; genre: string | null }): Promise<void>;
 
   createAdView(options: {
     id: string;

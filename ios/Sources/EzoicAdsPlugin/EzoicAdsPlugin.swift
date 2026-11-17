@@ -31,7 +31,9 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
     CAPPluginMethod(name: "presentConsentIfRequired", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "presentConsentSettings", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "isConsentRequired", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "isPrivacyOptionsRequired", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "resetConsent", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "setAppContent", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "createAdView", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "loadAdView", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "showAdView", returnType: CAPPluginReturnPromise),
@@ -114,7 +116,8 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
       debugEnabled: call.getBool("debugEnabled") ?? false,
       testMode: call.getBool("testMode") ?? false,
       autoTrackPageviews: call.getBool("autoTrackPageviews") ?? true,
-      cmpEnabled: call.getBool("cmpEnabled") ?? true
+      cmpEnabled: call.getBool("cmpEnabled") ?? true,
+      appPaid: call.getBool("appPaid")
     )
     let autoPresentConsent = call.getBool("autoPresentConsent") ?? true
     onMain { [weak self] in
@@ -193,6 +196,15 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
     }
   }
 
+  @objc func setAppContent(_ call: CAPPluginCall) {
+    let language = call.getString("language").flatMap { $0.isEmpty ? nil : $0 }
+    let genre = call.getString("genre").flatMap { $0.isEmpty ? nil : $0 }
+    onMain {
+      EzoicAds.shared.setAppContent(language: language, genre: genre)
+      call.resolve()
+    }
+  }
+
   @objc func setSubjectToCOPPA(_ call: CAPPluginCall) {
     guard let value = call.getBool("value") else {
       call.rejectPlugin("setSubjectToCOPPA requires `value`.")
@@ -221,6 +233,16 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
   @objc func isConsentRequired(_ call: CAPPluginCall) {
     onMain {
       if let required = EzoicAds.shared.isConsentRequired {
+        call.resolve(["required": required])
+      } else {
+        call.resolve(["required": NSNull()])
+      }
+    }
+  }
+
+  @objc func isPrivacyOptionsRequired(_ call: CAPPluginCall) {
+    onMain {
+      if let required = EzoicAds.shared.isPrivacyOptionsRequired {
         call.resolve(["required": required])
       } else {
         call.resolve(["required": NSNull()])
@@ -274,7 +296,10 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
       }
       return ["type": "decided", "decision": name]
     case .failed(let error):
-      return consentFailure(code: error.code, message: error.localizedDescription)
+      // `EzoicError` (through `EzoicAds`) and `CmpError` both carry the code.
+      let code = (error as? EzoicErrorCode)?.code ?? -1
+      let message = error.localizedDescription.isEmpty ? "Unknown error" : error.localizedDescription
+      return consentFailure(code: code, message: message)
     @unknown default:
       return consentFailure(code: -1, message: "Unrecognized outcome")
     }

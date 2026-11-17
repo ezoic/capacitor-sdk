@@ -108,6 +108,7 @@ class EzoicAdsPlugin : Plugin() {
       testMode = call.optBoolean("testMode", false),
       autoTrackPageviews = call.optBoolean("autoTrackPageviews", true),
       cmpEnabled = call.optBoolean("cmpEnabled", true),
+      appPaid = call.optBooleanOrNull("appPaid"),
     )
     val autoPresentConsent = call.optBoolean("autoPresentConsent", true)
     runOnMain {
@@ -179,6 +180,16 @@ class EzoicAdsPlugin : Plugin() {
   }
 
   @PluginMethod
+  fun setAppContent(call: PluginCall) {
+    val language = call.optString("language")
+    val genre = call.optString("genre")
+    runOnMain {
+      EzoicAds.instance.setAppContent(language, genre)
+      call.resolve()
+    }
+  }
+
+  @PluginMethod
   fun setSubjectToCOPPA(call: PluginCall) {
     val value = call.getBoolean("value")
     if (value == null) {
@@ -208,6 +219,16 @@ class EzoicAdsPlugin : Plugin() {
     runOnMain {
       val result = JSObject()
       val required: Boolean? = EzoicAds.instance.isConsentRequired
+      if (required == null) result.put("required", JSObject.NULL) else result.put("required", required)
+      call.resolve(result)
+    }
+  }
+
+  @PluginMethod
+  fun isPrivacyOptionsRequired(call: PluginCall) {
+    runOnMain {
+      val result = JSObject()
+      val required: Boolean? = EzoicAds.instance.isPrivacyOptionsRequired
       if (required == null) result.put("required", JSObject.NULL) else result.put("required", required)
       call.resolve(result)
     }
@@ -451,7 +472,7 @@ class EzoicAdsPlugin : Plugin() {
         ConsentDecisionType.CUSTOM -> "custom"
       },
     )
-    is ConsentOutcome.Failed -> consentFailure(error.code, error.message)
+    is ConsentOutcome.Failed -> consentFailure(consentErrorCode(error), consentErrorMessage(error))
   }
 
   companion object {

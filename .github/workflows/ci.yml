@@ -28,6 +28,9 @@ jobs:
 
       - run: npm run verify:web
 
+  # Before the native 1.22.0 release exists, the native jobs fail to resolve
+  # it, and the pinned iOS framework sha256s are TODO-RELEASE placeholders
+  # (fill them with `node scripts/fetch-ios-sdk.js --pin`).
   ios-spm:
     runs-on: macos-26
     defaults:
@@ -41,51 +44,81 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_26.6.app/Contents/Developer
           xcodebuild -version
 
-      - name: Build Swift package (iOS Simulator)
+      - name: Build Swift packages (iOS Simulator)
         run: |
-          xcodebuild build \
-            -scheme EzoicCapacitorSdk \
-            -destination 'generic/platform=iOS Simulator' \
-            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
-            -skipPackagePluginValidation \
-            COMPILER_INDEX_STORE_ENABLE=NO
+          for dir in . cmp; do
+            scheme=$([ "$dir" = cmp ] && echo EzoicCapacitorCmpSdk || echo EzoicCapacitorSdk)
+            (cd "$dir" && xcodebuild build \
+              -scheme "$scheme" \
+              -destination 'generic/platform=iOS Simulator' \
+              -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+              -skipPackagePluginValidation \
+              COMPILER_INDEX_STORE_ENABLE=NO)
+          done
+
+  # A fresh Capacitor app consuming the packed plugin(s), the way publishers
+  # install them from npm: each package alone, then both together (which must
+  # link one copy of each native library).
+  example-app:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ios-spm, ios-pods, android]
+        case: [ads, cmp, both]
+    runs-on: ${{ startsWith(matrix.platform, 'ios') && 'macos-26' || 'ubuntu-latest' }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Select Xcode 26.6
+        if: startsWith(matrix.platform, 'ios')
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app/Contents/Developer
+          xcodebuild -version
+
+      - uses: actions/setup-java@v5
+        if: matrix.platform == 'android'
+        with:
+          distribution: temurin
+          java-version: '21'
 
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
-      - name: Pack plugin
-        run: |
-          npm ci
-          npm run build
-          echo "TARBALL=$(npm pack --pack-destination "$RUNNER_TEMP" | tail -1)" >> "$GITHUB_ENV"
+      - run: npm ci
 
-      # A fresh Capacitor SPM app consuming the packed plugin, the way
-      # publishers install it from npm.
-      - name: Create Capacitor SPM app
-        working-directory: ${{ runner.temp }}
+      # Checks both pinned sha256s; packing vendors the frameworks.
+      - name: Fetch iOS frameworks
         run: |
-          mkdir -p spm-app/www
-          cd spm-app
-          echo '<!doctype html><html><body></body></html>' > www/index.html
-          echo '{"appId":"com.ezoic.spmtest","appName":"SpmTest","webDir":"www"}' > capacitor.config.json
-          npm init -y > /dev/null
-          npm install @capacitor/core@8 @capacitor/cli@8 @capacitor/ios@8 "$RUNNER_TEMP/$TARBALL"
-          npx cap add ios --packagemanager SPM
-          npx cap sync ios
+          node scripts/fetch-ios-sdk.js
+          node scripts/fetch-ios-sdk.js --check
 
-      - name: Build Capacitor SPM app (iOS Simulator)
-        working-directory: ${{ runner.temp }}/spm-app/ios/App
+      - name: Build example app
+        run: scripts/build-example-app.sh ${{ matrix.case }} ${{ matrix.platform }} "$RUNNER_TEMP/example"
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      # The plugins' settings.gradle resolve :capacitor-android from node_modules.
+      - run: npm ci
+
+      - name: Build and test the Android libraries
         run: |
-          xcodebuild build \
-            -project App.xcodeproj \
-            -scheme App \
-            -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
-            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
-            -skipPackagePluginValidation \
-            COMPILER_INDEX_STORE_ENABLE=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            | tee "$RUNNER_TEMP/app-build.log"
-          grep -A12 'Resolved source packages' "$RUNNER_TEMP/app-build.log"
+          (cd android && ./gradlew --no-daemon build test)
+          (cd cmp/android && ./gradlew --no-daemon build test)

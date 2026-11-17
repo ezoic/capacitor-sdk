@@ -1,0 +1,12 @@
+{
+  "name": "ezoic-capacitor-example",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Example Capacitor app for @ezoic/capacitor-sdk and @ezoic/capacitor-cmp-sdk. Build it with scripts/build-example-app.sh.",
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0"
+  }
+}

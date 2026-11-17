@@ -68,7 +68,16 @@ export class EzoicAdsWeb extends WebPlugin implements EzoicAdsPlugin {
     return { required: null };
   }
 
+  async isPrivacyOptionsRequired(): Promise<{ required: boolean | null }> {
+    this.warnOnce();
+    return { required: null };
+  }
+
   async resetConsent(): Promise<void> {
+    this.warnOnce();
+  }
+
+  async setAppContent(_options: { language: string | null; genre: string | null }): Promise<void> {
     this.warnOnce();
   }
 

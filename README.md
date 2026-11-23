@@ -278,6 +278,11 @@ A rewarded ad is single-use: `show()` resolves with the earned `EzoicReward`
 (or `null` if the user dismissed it early) once the ad closes, and rejects if
 it could not be presented. Load a new one for the next show.
 
+From 1.25.0 the native SDKs deprecate the rewarded load method with an ad unit
+identifier. This Capacitor plugin still requires the identifier in
+`EzoicRewardedAd.load('123456')`; its API has not changed. The native SDKs
+ignore that number for rewarded ads, so existing calls continue to work.
+
 ### Interstitial ads
 
 ```ts

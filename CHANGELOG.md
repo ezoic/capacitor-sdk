@@ -4,6 +4,30 @@ All notable changes to `@ezoic/capacitor-sdk` are documented here. The plugin
 version tracks the native Ezoic Ads SDKs it wraps (Swift and Kotlin) in
 lockstep.
 
+## 1.26.0
+
+Wraps Ezoic Ads SDK 1.26.0 on Android and iOS. Swift Package Manager builds
+resolve iOS 1.26.0 or a later 1.x. There was no `@ezoic/capacitor-sdk` 1.25.0,
+so this release also carries the native 1.25.0 change, listed first.
+
+- **From native 1.25.0: no Capacitor API change for rewarded ads.** The
+  native SDKs deprecate the rewarded load method with an ad unit identifier.
+  This Capacitor plugin still requires the number in
+  `EzoicRewardedAd.load('123456')`; its API has not changed. The native SDKs
+  ignore that number for rewarded ads, so existing calls continue to work.
+- **From native 1.26.0: banner and outstream bid requests carry the on-screen
+  position.** Banner and outstream bid requests now tell bidders where the ad
+  sits on screen (OpenRTB `banner.pos`). The SDK measures the view when it asks
+  for bids: in view is above the fold, off screen (further down a scroll view,
+  another page) is below the fold, and an anchor reports header or footer. A
+  view not yet in a window sends no position. Nothing to change in your app;
+  ads placed in view get the stronger signal.
+- Native pins: Android `com.ezoic.sdk:ezoic-ads-sdk:1.26.0` (with
+  `ezoic-consent-core` and `ezoic-cmp-sdk` 1.26.0 transitively); iOS SPM
+  `ezoic-swift-sdk-dist` from 1.26.0; CocoaPods vendors the 1.26.0
+  `EzoicAdsSDKBinary`, `EzoicConsentCoreBinary` and `EzoicCmpSDKBinary`
+  XCFrameworks.
+
 ## 1.24.0
 
 Wraps Ezoic Ads SDK 1.24.0 on Android and iOS: all Ezoic SDKs now share one

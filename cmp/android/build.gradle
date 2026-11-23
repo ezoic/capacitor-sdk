@@ -26,7 +26,7 @@ android {
         minSdkVersion project.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : 24
         targetSdkVersion project.hasProperty('targetSdkVersion') ? rootProject.ext.targetSdkVersion : 36
         versionCode 1
-        versionName "1.24.0"
+        versionName "1.26.0"
     }
     buildTypes {
         release {
@@ -63,7 +63,7 @@ dependencies {
     // The built-in CMP alone (Maven Central). `com.ezoic.sdk:ezoic-ads-sdk`
     // depends on this same artifact, so an app with both plugins resolves one
     // copy.
-    implementation "com.ezoic.sdk:ezoic-cmp-sdk:1.24.0"
+    implementation "com.ezoic.sdk:ezoic-cmp-sdk:1.26.0"
 
     testImplementation "junit:junit:$junitVersion"
 }

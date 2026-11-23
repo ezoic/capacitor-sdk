@@ -115,15 +115,22 @@ jobs:
       # intent explicit. A version already on npm (a re-run after a partial
       # publish) is skipped. The CMP goes first: the ads pod depends on it at
       # the same version when an app installs both.
+      #
+      # A failed CMP publish doesn't block the ads package: the ads package
+      # doesn't depend on the CMP package on npm, and the usual cause is a
+      # missing or mismatched Trusted Publisher (E404), which only an npm org
+      # admin can fix. Fix it, then re-run this workflow on the same tag.
       - name: Publish @ezoic/capacitor-cmp-sdk
         if: steps.preflight.outputs.cmp == 'true'
         working-directory: cmp
+        continue-on-error: true
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           if [ -n "$(npm view "@ezoic/capacitor-cmp-sdk@$VERSION" version 2>/dev/null)" ]; then
             echo "@ezoic/capacitor-cmp-sdk@$VERSION is already published; skipping"
-          else
-            npm publish --provenance --access public
+          elif ! npm publish --provenance --access public; then
+            echo "::error::@ezoic/capacitor-cmp-sdk@$VERSION was not published (E404 = its npm Trusted Publisher is missing or doesn't match; see the header of this workflow). Continuing with @ezoic/capacitor-sdk; re-run this workflow on the same tag once it's fixed."
+            exit 1
           fi
 
       - name: Publish @ezoic/capacitor-sdk

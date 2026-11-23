@@ -124,15 +124,15 @@ export class EzoicAdsWeb extends WebPlugin implements EzoicAdsPlugin {
     this.warnOnce();
   }
 
-  async loadRewardedAd(_options: { adUnitIdentifier?: string }): Promise<void> {
+  async loadRewardedAd(_options: { adUnitIdentifier: string }): Promise<void> {
     throw this.unavailable(NOT_AVAILABLE);
   }
 
-  async showRewardedAd(_options: { adUnitIdentifier?: string; rewardName?: string }): Promise<EzoicRewardResult> {
+  async showRewardedAd(_options: { adUnitIdentifier: string; rewardName?: string }): Promise<EzoicRewardResult> {
     throw this.unavailable(NOT_AVAILABLE);
   }
 
-  async destroyRewardedAd(_options: { adUnitIdentifier?: string }): Promise<void> {
+  async destroyRewardedAd(_options: { adUnitIdentifier: string }): Promise<void> {
     this.warnOnce();
   }
 

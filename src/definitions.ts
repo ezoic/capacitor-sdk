@@ -379,10 +379,9 @@ export interface EzoicAdsPlugin {
   setAdViewStyle(options: { id: string; adStyle: EzoicNativeAdStyle }): Promise<void>;
   destroyAdView(options: { id: string }): Promise<void>;
 
-  /** Rewarded ads need no ad unit identifier: omitted (or `'0'`) keys the ad as `'0'`. */
-  loadRewardedAd(options: { adUnitIdentifier?: string }): Promise<void>;
-  showRewardedAd(options: { adUnitIdentifier?: string; rewardName?: string }): Promise<EzoicRewardResult>;
-  destroyRewardedAd(options: { adUnitIdentifier?: string }): Promise<void>;
+  loadRewardedAd(options: { adUnitIdentifier: string }): Promise<void>;
+  showRewardedAd(options: { adUnitIdentifier: string; rewardName?: string }): Promise<EzoicRewardResult>;
+  destroyRewardedAd(options: { adUnitIdentifier: string }): Promise<void>;
   loadInterstitialAd(options: { adUnitIdentifier: string }): Promise<void>;
   showInterstitialAd(options: { adUnitIdentifier: string }): Promise<void>;
   destroyInterstitialAd(options: { adUnitIdentifier: string }): Promise<void>;

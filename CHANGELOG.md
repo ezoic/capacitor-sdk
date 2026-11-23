@@ -8,19 +8,13 @@ lockstep.
 
 Wraps Ezoic Ads SDK 1.26.0 on Android and iOS. Swift Package Manager builds
 resolve iOS 1.26.0 or a later 1.x. There was no `@ezoic/capacitor-sdk` 1.25.0,
-so this release also brings the native 1.25.0 change (rewarded ads need no ad
-unit identifier), listed first.
+so this release also carries the native 1.25.0 change, listed first.
 
-- **From native 1.25.0: rewarded ads need no ad unit identifier.**
-  `EzoicRewardedAd.load()` takes no argument; its `adUnitIdentifier` parameter
-  is now optional. Existing calls such as `EzoicRewardedAd.load('123456')`
-  still compile and work unchanged: the native SDKs ignore the number for
-  rewarded ads, and the plugin uses it only to tell loaded ads apart (so
-  different values still let you keep more than one loaded). An ad loaded
-  without one has `adUnitIdentifier` `'0'`; load the next one after it is
-  shown or destroyed. The plugin calls the native SDKs' new identifier-free
-  rewarded load on both platforms. Banner, native, outstream, interstitial and
-  instream ads still need their identifier.
+- **From native 1.25.0: no Capacitor API change for rewarded ads.** The
+  native SDKs deprecate the rewarded load method with an ad unit identifier.
+  This Capacitor plugin still requires the number in
+  `EzoicRewardedAd.load('123456')`; its API has not changed. The native SDKs
+  ignore that number for rewarded ads, so existing calls continue to work.
 - **From native 1.26.0: banner and outstream bid requests carry the on-screen
   position.** Banner and outstream bid requests now tell bidders where the ad
   sits on screen (OpenRTB `banner.pos`). The SDK measures the view when it asks

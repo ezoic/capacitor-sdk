@@ -22,28 +22,6 @@ describe('EzoicRewardedAd', () => {
     expect(plugin.loadRewardedAd).toHaveBeenCalledWith({ adUnitIdentifier: '12345' });
   });
 
-  it('load needs no ad unit identifier: the ad is keyed as "0"', async () => {
-    const ad = await EzoicRewardedAd.load();
-    expect(ad.adUnitIdentifier).toBe('0');
-    expect(plugin.loadRewardedAd).toHaveBeenCalledWith({ adUnitIdentifier: '0' });
-
-    const onShown = vi.fn();
-    ad.setListeners({ onShown });
-    plugin.emit('rewardedAdEvent', { adUnitIdentifier: '0', type: 'shown' });
-    expect(onShown).toHaveBeenCalledTimes(1);
-
-    plugin.showRewardedAd.mockResolvedValue({ earned: true, type: 'coins', amount: 1 });
-    await expect(ad.show()).resolves.toEqual({ type: 'coins', amount: 1 });
-    expect(plugin.showRewardedAd).toHaveBeenCalledWith({ adUnitIdentifier: '0', rewardName: undefined });
-  });
-
-  it('load treats an empty identifier as none', async () => {
-    const ad = await EzoicRewardedAd.load('');
-    expect(ad.adUnitIdentifier).toBe('0');
-    await ad.destroy();
-    expect(plugin.destroyRewardedAd).toHaveBeenCalledWith({ adUnitIdentifier: '0' });
-  });
-
   it('load rejects and unsubscribes on failure', async () => {
     plugin.loadRewardedAd.mockRejectedValue(new Error('No fill'));
     await expect(EzoicRewardedAd.load('1')).rejects.toThrow('No fill');

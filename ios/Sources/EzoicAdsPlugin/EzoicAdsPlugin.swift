@@ -415,18 +415,18 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
   // MARK: - Rewarded
 
   @objc func loadRewardedAd(_ call: CAPPluginCall) {
-    let id = rewardedAdUnit(call)
+    guard let id = requireAdUnit(call) else { return }
     onMain { [weak self] in self?.fullScreen.loadRewarded(id, call: call) }
   }
 
   @objc func showRewardedAd(_ call: CAPPluginCall) {
-    let id = rewardedAdUnit(call)
+    guard let id = requireAdUnit(call) else { return }
     let rewardName = call.getString("rewardName")
     onMain { [weak self] in self?.fullScreen.showRewarded(id, rewardName: rewardName, call: call) }
   }
 
   @objc func destroyRewardedAd(_ call: CAPPluginCall) {
-    let id = rewardedAdUnit(call)
+    guard let id = requireAdUnit(call) else { return }
     onMain { [weak self] in
       self?.fullScreen.destroyRewarded(id)
       call.resolve()
@@ -496,13 +496,6 @@ public class EzoicAdsPlugin: CAPPlugin, CAPBridgedPlugin {
       call.rejectPlugin("Missing `adUnitIdentifier`.")
       return nil
     }
-    return id
-  }
-
-  /// Rewarded ads need no ad unit identifier: none keys the ad as "0", like
-  /// the JS side.
-  private func rewardedAdUnit(_ call: CAPPluginCall) -> String {
-    guard let id = call.getString("adUnitIdentifier"), !id.isEmpty else { return "0" }
     return id
   }
 

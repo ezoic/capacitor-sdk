@@ -357,20 +357,20 @@ class EzoicAdsPlugin : Plugin() {
 
   @PluginMethod
   fun loadRewardedAd(call: PluginCall) {
-    val id = rewardedAdUnit(call)
+    val id = requireAdUnit(call) ?: return
     runOnMain { fullScreen.loadRewarded(id, call) }
   }
 
   @PluginMethod
   fun showRewardedAd(call: PluginCall) {
-    val id = rewardedAdUnit(call)
+    val id = requireAdUnit(call) ?: return
     val rewardName = call.optString("rewardName")
     runOnMain { fullScreen.showRewarded(id, rewardName, activity, call) }
   }
 
   @PluginMethod
   fun destroyRewardedAd(call: PluginCall) {
-    val id = rewardedAdUnit(call)
+    val id = requireAdUnit(call) ?: return
     runOnMain {
       fullScreen.destroyRewarded(id)
       call.resolve()
@@ -450,10 +450,6 @@ class EzoicAdsPlugin : Plugin() {
     return id
   }
 
-  /** Rewarded ads need no ad unit identifier: none keys the ad as "0", like the JS side. */
-  private fun rewardedAdUnit(call: PluginCall): String =
-    call.optString("adUnitIdentifier")?.takeIf { it.isNotEmpty() } ?: REWARDED_DEFAULT_AD_UNIT
-
   /** Instream ids arrive as JS numbers; accept numeric strings too. */
   private fun requireNumericAdUnit(call: PluginCall): Int? {
     val id = call.getInt("adUnitIdentifier") ?: call.optString("adUnitIdentifier")?.toIntOrNull()
@@ -493,7 +489,6 @@ class EzoicAdsPlugin : Plugin() {
     private const val AD_VIEW_EVENT = "adViewEvent"
     private const val REWARDED_EVENT = "rewardedAdEvent"
     private const val INTERSTITIAL_EVENT = "interstitialAdEvent"
-    private const val REWARDED_DEFAULT_AD_UNIT = "0"
     private const val NO_ACTIVITY_CODE = -1
     private const val NO_ACTIVITY_MESSAGE = "No foreground Activity"
   }

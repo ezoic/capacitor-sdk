@@ -5,7 +5,7 @@ import type {
   EzoicRewardedShowOptions,
 } from './definitions';
 import { rewardedAdEvents } from './events';
-import { coerceAdUnitId, mapRewardResult } from './helpers';
+import { coerceAdUnitId, mapRewardResult, REWARDED_DEFAULT_AD_UNIT_ID } from './helpers';
 import { EzoicAdsNative } from './plugin';
 import { sessionReady } from './session';
 
@@ -14,7 +14,7 @@ import { sessionReady } from './session';
  * `show()` to present it and grant the reward when the user finishes watching.
  *
  * ```ts
- * const ad = await EzoicRewardedAd.load('12345');
+ * const ad = await EzoicRewardedAd.load();
  * ad.setListeners({ onDismissed: () => console.log('closed') });
  * const reward = await ad.show();
  * if (reward) grantReward(reward.amount);
@@ -24,7 +24,10 @@ import { sessionReady } from './session';
  * Rewarded ads are single-use — load a new one for the next opportunity.
  */
 export class EzoicRewardedAd {
-  /** The Ezoic ad unit identifier this ad was loaded for. */
+  /**
+   * The ad unit identifier passed to `load`, or `'0'` when it was loaded
+   * without one. Rewarded ads don't need one; it only tells loaded ads apart.
+   */
   readonly adUnitIdentifier: string;
 
   private listeners: EzoicRewardedAdListeners = {};
@@ -40,12 +43,21 @@ export class EzoicRewardedAd {
   }
 
   /**
-   * Loads a rewarded ad for the given Ezoic ad unit identifier. Resolves with
-   * a ready-to-show `EzoicRewardedAd`, or rejects if no ad could be loaded
-   * (use `getEzoicErrorCode(error)` for the native code).
+   * Loads a rewarded ad. Resolves with a ready-to-show `EzoicRewardedAd`, or
+   * rejects if no ad could be loaded (use `getEzoicErrorCode(error)` for the
+   * native code).
+   *
+   * Rewarded ads need no ad unit identifier (since 1.25.0). An identifier
+   * passed as before still works but has no effect on the ad; it only keys
+   * this ad, so different identifiers let you hold more than one loaded
+   * rewarded ad at a time. Without one, one rewarded ad can be loaded at a
+   * time: show or destroy it before loading the next.
    */
-  static async load(adUnitIdentifier: string | number): Promise<EzoicRewardedAd> {
-    const id = coerceAdUnitId(adUnitIdentifier);
+  static async load(adUnitIdentifier?: string | number): Promise<EzoicRewardedAd> {
+    const id =
+      adUnitIdentifier === undefined || adUnitIdentifier === null || adUnitIdentifier === ''
+        ? REWARDED_DEFAULT_AD_UNIT_ID
+        : coerceAdUnitId(adUnitIdentifier);
     const ad = new EzoicRewardedAd(id);
     try {
       await sessionReady;

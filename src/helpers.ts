@@ -69,6 +69,12 @@ export function coerceAdUnitId(adUnitIdentifier: string | number): string {
   return String(adUnitIdentifier);
 }
 
+/**
+ * Key of a rewarded ad loaded without an ad unit identifier. The native SDKs
+ * report 0 as the identifier of such an ad; the plugins default to it too.
+ */
+export const REWARDED_DEFAULT_AD_UNIT_ID = '0';
+
 /** Default overlay placement when none is given. */
 export const DEFAULT_PLACEMENT: EzoicAdPlacement = { position: 'bottom' };
 

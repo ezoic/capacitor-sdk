@@ -264,7 +264,7 @@ await outstream.load();
 ```ts
 import { EzoicRewardedAd } from '@ezoic/capacitor-sdk';
 
-const ad = await EzoicRewardedAd.load('123456'); // rejects on no fill
+const ad = await EzoicRewardedAd.load(); // rejects on no fill
 ad.setListeners({
   onShown: () => console.log('shown'),
   onUserEarnedReward: (reward) => console.log('reward', reward.type, reward.amount),
@@ -277,6 +277,12 @@ if (reward) grantCoins(reward.amount);
 A rewarded ad is single-use: `show()` resolves with the earned `EzoicReward`
 (or `null` if the user dismissed it early) once the ad closes, and rejects if
 it could not be presented. Load a new one for the next show.
+
+Rewarded ads need no ad unit identifier (since 1.25.0). Code that still passes
+one, `EzoicRewardedAd.load('123456')`, keeps working: the identifier has no
+effect on the ad and only tells loaded rewarded ads apart, so different values
+let you keep more than one loaded at a time. Without one, load the next
+rewarded ad after the current one is shown or destroyed.
 
 ### Interstitial ads
 
@@ -563,7 +569,7 @@ banner.setListeners({
 });
 
 try {
-  const ad = await EzoicRewardedAd.load('123456');
+  const ad = await EzoicRewardedAd.load();
   await ad.show();
 } catch (e) {
   if (getEzoicErrorCode(e) === EzoicErrorCode.consentRequired) {
@@ -630,7 +636,7 @@ an unlabelled pageview.
   - `.load()`, `.show()`, `.hide()`, `.setPlacement(placement)`, `.destroy()` → `Promise<void>`
   - `.attachTo(element, { autoHeight? })` → `() => void`, `.detach()`, `.getPlacement()`
   - `.setStyle(adStyle)` → `Promise<void>` (native only)
-- `EzoicRewardedAd.load(adUnitIdentifier)` → `Promise<EzoicRewardedAd>`
+- `EzoicRewardedAd.load(adUnitIdentifier?)` → `Promise<EzoicRewardedAd>` (no identifier needed; one passed is ignored by the native SDKs)
   - `.setListeners({ onShown, onFailedToShow, onImpression, onClicked, onUserEarnedReward, onDismissed })`
   - `.show({ rewardName? })` → `Promise<EzoicReward | null>`, `.destroy()` → `Promise<void>`
 - `EzoicInterstitialAd.load(adUnitIdentifier)` → `Promise<EzoicInterstitialAd>`

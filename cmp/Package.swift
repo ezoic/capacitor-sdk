@@ -15,7 +15,7 @@ let package = Package(
         // The built-in CMP alone: the `EzoicCmpSDK` product of the same dist
         // package @ezoic/capacitor-sdk uses, so an app with both plugins links
         // one copy. Kept in lockstep with the plugin version.
-        .package(url: "https://github.com/ezoic/ezoic-swift-sdk-dist.git", from: "1.24.0")
+        .package(url: "https://github.com/ezoic/ezoic-swift-sdk-dist.git", from: "1.26.0")
     ],
     targets: [
         .target(

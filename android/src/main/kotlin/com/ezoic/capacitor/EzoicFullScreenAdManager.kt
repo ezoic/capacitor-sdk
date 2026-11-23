@@ -44,9 +44,14 @@ internal class EzoicFullScreenAdManager(
 
   // --- rewarded ----------------------------------------------------------
 
+  /**
+   * Rewarded ads need no ad unit identifier (native 1.25.0+), so the native
+   * load takes none. [rawId] only keys the ad here and in its events: the one
+   * the app passed (any whole number, as before), or "0" when it passed none.
+   */
   fun loadRewarded(rawId: String, call: PluginCall) {
     val id = rawId.toIntOrNull()
-    if (id == null || id <= 0) {
+    if (id == null || id < 0) {
       call.rejectPlugin("Invalid adUnitIdentifier: $rawId")
       return
     }
@@ -54,7 +59,7 @@ internal class EzoicFullScreenAdManager(
       call.rejectPlugin("An ad is already loaded/loading for ad unit $rawId")
       return
     }
-    EzoicRewardedAd.load(context, id) { result ->
+    EzoicRewardedAd.load(context) { result ->
       loadingRewarded.remove(id)
       result.onSuccess { ad ->
         ad.listener = rewardedListener(rawId)

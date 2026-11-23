@@ -33,6 +33,11 @@ final class EzoicFullScreenAdManager: NSObject {
   private var rewardedAds: [Int: EzoicRewardedAd] = [:]
   private var pendingRewardShows: [Int: PendingRewardShow] = [:]
   private var loadingRewarded: Set<Int> = []
+  /// The key each rewarded ad was loaded under. The native ad can't say: it
+  /// is loaded without an identifier, so its `adUnitIdentifier` is 0. Weak
+  /// keys, so an entry lives exactly as long as its ad (late delegate
+  /// callbacks still find it).
+  private let rewardedKeys = NSMapTable<EzoicRewardedAd, NSNumber>.weakToStrongObjects()
 
   private var interstitialAds: [Int: EzoicInterstitialAd] = [:]
   private var pendingInterstitialShows: [Int: PendingCall] = [:]
@@ -54,8 +59,12 @@ final class EzoicFullScreenAdManager: NSObject {
 
   // MARK: - Rewarded
 
+  /// Rewarded ads need no ad unit identifier (native 1.25.0+), so the native
+  /// load takes none. `rawId` only keys the ad here and in its events: the
+  /// one the app passed (any whole number, as before), or "0" when it passed
+  /// none.
   func loadRewarded(_ rawId: String, call: CAPPluginCall) {
-    guard let id = Int(rawId), id > 0 else {
+    guard let id = Int(rawId), id >= 0 else {
       call.rejectPlugin("Invalid adUnitIdentifier: \(rawId)")
       return
     }
@@ -64,18 +73,19 @@ final class EzoicFullScreenAdManager: NSObject {
       return
     }
     loadingRewarded.insert(id)
-    EzoicRewardedAd.load(adUnitIdentifier: id) { [weak self] result in
+    EzoicRewardedAd.load(completion: { [weak self] result in
       guard let self = self else { return }
       self.loadingRewarded.remove(id)
       switch result {
       case .success(let ad):
+        self.rewardedKeys.setObject(NSNumber(value: id), forKey: ad)
         ad.delegate = self
         self.rewardedAds[id] = ad
         call.resolve()
       case .failure(let error):
         call.rejectEzoic(error, fallback: "Rewarded ad failed to load")
       }
-    }
+    })
   }
 
   func showRewarded(_ rawId: String, rewardName: String?, call: CAPPluginCall) {
@@ -104,8 +114,12 @@ final class EzoicFullScreenAdManager: NSObject {
     }
   }
 
+  private func rewardedKey(_ ad: EzoicRewardedAd) -> Int {
+    rewardedKeys.object(forKey: ad)?.intValue ?? ad.adUnitIdentifier
+  }
+
   private func emitRewardedEvent(_ ad: EzoicRewardedAd, _ type: String, _ extra: [String: Any] = [:]) {
-    var body: [String: Any] = ["adUnitIdentifier": String(ad.adUnitIdentifier), "type": type]
+    var body: [String: Any] = ["adUnitIdentifier": String(rewardedKey(ad)), "type": type]
     for (key, value) in extra { body[key] = value }
     emitRewarded(body)
   }
@@ -249,7 +263,7 @@ extension EzoicFullScreenAdManager: EzoicRewardedAdDelegate {
 
   func rewardedAd(_ rewardedAd: EzoicRewardedAd, didFailToPresentWithError error: EzoicError) {
     emitRewardedEvent(rewardedAd, "failedToShow", ["message": error.localizedDescription, "code": error.code])
-    let id = rewardedAd.adUnitIdentifier
+    let id = rewardedKey(rewardedAd)
     rewardedAds.removeValue(forKey: id)
     if let pending = pendingRewardShows.removeValue(forKey: id), !pending.settled {
       pending.settled = true
@@ -267,12 +281,12 @@ extension EzoicFullScreenAdManager: EzoicRewardedAdDelegate {
 
   func rewardedAd(_ rewardedAd: EzoicRewardedAd, userDidEarn reward: EzoicReward) {
     emitRewardedEvent(rewardedAd, "reward", ["rewardType": reward.type, "rewardAmount": reward.amount])
-    pendingRewardShows[rewardedAd.adUnitIdentifier]?.reward = reward
+    pendingRewardShows[rewardedKey(rewardedAd)]?.reward = reward
   }
 
   func rewardedAdDidDismiss(_ rewardedAd: EzoicRewardedAd) {
     emitRewardedEvent(rewardedAd, "dismissed")
-    let id = rewardedAd.adUnitIdentifier
+    let id = rewardedKey(rewardedAd)
     rewardedAds.removeValue(forKey: id)
     if let pending = pendingRewardShows.removeValue(forKey: id), !pending.settled {
       pending.settled = true
